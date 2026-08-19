@@ -271,4 +271,66 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  /* ==========================================================================
+     GOOGLE & APPLE OAUTH AUTHENTICATION INTEGRATION
+     ========================================================================== */
+  const googleBtns = document.querySelectorAll('#googleLoginBtn, [aria-label*="Google"]');
+  const appleBtns = document.querySelectorAll('#appleLoginBtn, [aria-label*="Apple"]');
+
+  // Google OAuth Handler
+  googleBtns.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      clearAuthMessage();
+
+      if (!supabaseClient) {
+        showAuthMessage('Supabase client is initializing. Please check connection.', 'error');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin + window.location.pathname,
+          },
+        });
+
+        if (error) {
+          showAuthMessage(error.message || 'Google authentication failed. Please verify provider configuration in Supabase.', 'error');
+        }
+      } catch (err) {
+        showAuthMessage('Google OAuth sign-in error occurred.', 'error');
+      }
+    });
+  });
+
+  // Apple OAuth Handler
+  appleBtns.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      clearAuthMessage();
+
+      if (!supabaseClient) {
+        showAuthMessage('Supabase client is initializing. Please check connection.', 'error');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithOAuth({
+          provider: 'apple',
+          options: {
+            redirectTo: window.location.origin + window.location.pathname,
+          },
+        });
+
+        if (error) {
+          showAuthMessage(error.message || 'Apple authentication failed. Please verify provider configuration in Supabase.', 'error');
+        }
+      } catch (err) {
+        showAuthMessage('Apple OAuth sign-in error occurred.', 'error');
+      }
+    });
+  });
 });
