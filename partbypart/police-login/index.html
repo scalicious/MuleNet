@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Police Network Login</title>
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+
+  <!-- Full Page 2-Column Container -->
+  <main class="page-container">
+
+    <!-- ==========================================================================
+       LEFT SIDE: Police Information + Clean Illustration Container Placeholder
+       ========================================================================== -->
+    <section class="left-section">
+      
+      <!-- Top-Left Police Badge & Info Block -->
+      <div class="left-info-top">
+        <span class="left-badge">
+          <span class="status-dot"></span>
+          POLICE DISPATCH
+        </span>
+        <h2 class="left-title">Emergency Command</h2>
+        <p class="left-desc">Real-time officer dispatch & tactical response network.</p>
+      </div>
+
+      <!-- Police 3D Illustration Container Placeholder -->
+      <div class="image-wrapper police-illustration">
+        <!-- POLICE IMAGE WILL BE ADDED HERE -->
+        <!-- Example usage when image is provided: <img src="police-hero.jpg" alt="Police Emergency Network Illustration" class="hero-image"> -->
+      </div>
+
+      <!-- Bottom Police Info Block -->
+      <div class="left-info-bottom">
+        <h3 class="left-sub-title">Tactical Unit Access</h3>
+        <p class="left-sub-desc">Connecting precinct command, live GPS tracking, and active SOS responder units.</p>
+      </div>
+
+    </section>
+
+    <!-- ==========================================================================
+       RIGHT SIDE: Police Login Section with Split-Flap Animated Title
+       ========================================================================== -->
+    <section class="login-section">
+      <div class="login-container">
+
+        <!-- ==========================================================================
+           SIGN IN VIEW (POLICE OFFICER)
+           ========================================================================== -->
+        <div id="signInView" class="auth-view">
+          <!-- Header Section with Split-Flap (Flip Clock) Transition -->
+          <div class="login-header">
+            <!-- Split-Flap Character Board Container -->
+            <div class="split-flap-container" id="splitFlapTitle" aria-label="Welcome Officer">
+              <!-- Generated dynamically by script.js -->
+            </div>
+            <p class="login-subtitle">Access the emergency response and dispatch network.</p>
+          </div>
+
+          <!-- Login Form -->
+          <form class="login-form" action="#" method="POST" onsubmit="return false;">
+            <!-- Email Field -->
+            <div class="form-group">
+              <label for="email" class="form-label">Official Email</label>
+              <input 
+                type="email" 
+                id="email" 
+                name="email" 
+                class="form-input" 
+                placeholder="e.g. officer.smith@police.gov"
+                required
+                autocomplete="email"
+              >
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group">
+              <div class="label-wrapper">
+                <label for="password" class="form-label">Password</label>
+                <a href="#" class="forgot-password">Forgot Password?</a>
+              </div>
+              <div class="password-input-wrapper">
+                <input 
+                  type="password" 
+                  id="password" 
+                  name="password" 
+                  class="form-input" 
+                  placeholder="Enter officer credentials"
+                  required
+                  autocomplete="current-password"
+                >
+                <!-- Visual Eye Icon Button -->
+                <button type="button" class="eye-icon-btn" aria-label="Toggle password visibility" tabindex="-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Pill-Shaped Golden Login Button -->
+            <button type="submit" class="btn-login">Login</button>
+          </form>
+
+          <!-- Social / Badge Login Options -->
+          <div class="social-login-wrapper">
+            <button type="button" class="social-btn" aria-label="Sign in with Department SSO">
+              <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.3 7.31 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.18 0 10.02 0 12s.46 3.82 1.26 5.42l4.02-3.15z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.94 1.19 15.23 0 12 0 7.31 0 3.25 2.7 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+              </svg>
+            </button>
+
+            <button type="button" class="social-btn" aria-label="Sign in with Department Apple ID">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.36c.62-.75 1.04-1.8 0.93-2.86-.9.04-2 0.6-2.65 1.36-.58.67-1.09 1.74-.95 2.78 1.01.08 2.05-.53 2.67-1.28z"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Signup Link Footer -->
+          <div class="signup-footer">
+            <p>Need police portal access? <a href="#" class="signup-link" id="toSignUpBtn">Register Badge</a></p>
+          </div>
+        </div>
+
+        <!-- ==========================================================================
+           SIGN UP VIEW (OFFICER REGISTRATION)
+           ========================================================================== -->
+        <div id="signUpView" class="auth-view" style="display: none;">
+          <!-- Header Section -->
+          <div class="login-header">
+            <h2 class="signup-title">Officer Credentials</h2>
+            <p class="login-subtitle">Register your badge & precinct credentials.</p>
+          </div>
+
+          <!-- Sign Up Form -->
+          <form class="login-form" action="#" method="POST" onsubmit="return false;">
+            <!-- Badge / Full Name Field -->
+            <div class="form-group">
+              <label for="fullname" class="form-label">Full Name & Badge Number</label>
+              <input 
+                type="text" 
+                id="fullname" 
+                name="fullname" 
+                class="form-input" 
+                placeholder="e.g. Officer John Doe - Badge #4892"
+                required
+                autocomplete="name"
+              >
+            </div>
+
+            <!-- Email Field -->
+            <div class="form-group">
+              <label for="signup-email" class="form-label">Department Email</label>
+              <input 
+                type="email" 
+                id="signup-email" 
+                name="email" 
+                class="form-input" 
+                placeholder="e.g. officer.smith@police.gov"
+                required
+                autocomplete="email"
+              >
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group">
+              <label for="signup-password" class="form-label">Password</label>
+              <div class="password-input-wrapper">
+                <input 
+                  type="password" 
+                  id="signup-password" 
+                  name="password" 
+                  class="form-input" 
+                  placeholder="Create secure portal password"
+                  required
+                  autocomplete="new-password"
+                >
+                <!-- Visual Eye Icon Button -->
+                <button type="button" class="eye-icon-btn" aria-label="Toggle password visibility" tabindex="-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Confirm Password Field -->
+            <div class="form-group">
+              <label for="confirm-password" class="form-label">Confirm Password</label>
+              <div class="password-input-wrapper">
+                <input 
+                  type="password" 
+                  id="confirm-password" 
+                  name="confirm_password" 
+                  class="form-input" 
+                  placeholder="Confirm password"
+                  required
+                  autocomplete="new-password"
+                >
+                <!-- Visual Eye Icon Button -->
+                <button type="button" class="eye-icon-btn" aria-label="Toggle password visibility" tabindex="-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Pill-Shaped Golden Register Button -->
+            <button type="submit" class="btn-login">Register Badge</button>
+          </form>
+
+          <!-- Social Login Buttons -->
+          <div class="social-login-wrapper">
+            <button type="button" class="social-btn" aria-label="Sign up with Department SSO">
+              <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.3 7.31 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.18 0 10.02 0 12s.46 3.82 1.26 5.42l4.02-3.15z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.94 1.19 15.23 0 12 0 7.31 0 3.25 2.7 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+              </svg>
+            </button>
+
+            <button type="button" class="social-btn" aria-label="Sign up with Department Apple ID">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.36c.62-.75 1.04-1.8 0.93-2.86-.9.04-2 0.6-2.65 1.36-.58.67-1.09 1.74-.95 2.78 1.01.08 2.05-.53 2.67-1.28z"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Sign In Link Footer -->
+          <div class="signup-footer">
+            <p>Already registered? <a href="#" class="signup-link" id="toSignInBtn">Sign In</a></p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+</body>
+</html>

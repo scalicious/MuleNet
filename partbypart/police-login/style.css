@@ -1,0 +1,670 @@
+/* ==========================================================================
+   Police Network Login Page - CSS Styling
+   Aesthetic: Premium Dark (#141414) & Golden Yellow Theme
+   Matches User Login Aesthetic Perfectly
+   ========================================================================== */
+
+/* 1. Global Reset & Theme Variables */
+:root {
+  /* Colors - Matched seamlessly to image edge background #141414 */
+  --bg-dark: #141414;               /* Exact dark background matching reference image */
+  --input-bg: #191b22;              /* Dark gray input field background */
+  --input-border: #282c38;          /* Subtle dark input border */
+  --input-focus: #e5a93b;           /* Gold border accent on focus */
+
+  --gold-primary: #e5a93b;          /* Golden Yellow Accent */
+  --gold-light: #f8cd68;            /* Lighter gold for hover/highlights */
+  --gold-gradient: linear-gradient(135deg, #f5c443 0%, #d4951d 100%);
+  --gold-gradient-hover: linear-gradient(135deg, #ffd359 0%, #e0a329 100%);
+
+  --text-white: #ffffff;            /* Pure white heading text */
+  --text-muted: #8891a4;            /* Gray subtitle & label text */
+  --text-dark: #08090a;             /* Black text inside golden login button */
+
+  /* Typography & Layout Radius */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --radius-pill: 9999px;            /* Fully rounded pill shape for buttons */
+  --radius-input: 26px;             /* Pill rounded input fields */
+}
+
+/* Reset default margins and paddings */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-dark);
+  font-family: var(--font-family);
+  color: var(--text-white);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   2. Page Container (50/50 Desktop Split)
+   ========================================================================== */
+
+.page-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--bg-dark);
+}
+
+/* ==========================================================================
+   3. LEFT SIDE: Police Info + Dedicated Illustration Placeholder Container
+   ========================================================================== */
+
+.left-section {
+  flex: 1;                           /* Takes 50% width on desktop */
+  width: 50%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 44px 44px;
+  background-color: var(--bg-dark);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top-Left Enhanced Glass Card & Entrance Animation */
+.left-info-top {
+  max-width: 400px;
+  z-index: 2;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  animation: slideInTop 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.35s ease;
+}
+
+.left-info-top:hover {
+  background: rgba(229, 169, 59, 0.04);
+  border-color: rgba(229, 169, 59, 0.25);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(229, 169, 59, 0.08);
+}
+
+/* Glowing Pulsing Status Dot */
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--gold-primary);
+  margin-right: 6px;
+  box-shadow: 0 0 8px var(--gold-primary);
+  animation: statusPulse 2s infinite;
+}
+
+@keyframes statusPulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(229, 169, 59, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(229, 169, 59, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(229, 169, 59, 0); }
+}
+
+.left-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.725rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--gold-primary);
+  background-color: rgba(229, 169, 59, 0.1);
+  border: 1px solid rgba(229, 169, 59, 0.25);
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.left-title {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--text-white);
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.left-desc {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Police 3D Illustration Container Placeholder */
+.image-wrapper.police-illustration {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  min-height: 280px;
+  width: 100%;
+}
+
+/* When a police 3D illustration image is placed inside later */
+.police-illustration img,
+.hero-image {
+  display: block;
+  max-width: 95%;
+  max-height: 50vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  animation: floatGentle 6s ease-in-out infinite;
+}
+
+@keyframes floatGentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Bottom Enhanced Glass Card & Entrance Animation */
+.left-info-bottom {
+  max-width: 440px;
+  z-index: 2;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  animation: slideInBottom 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards;
+  opacity: 0;                        /* Initial hidden state for staggered delay */
+  transition: all 0.35s ease;
+}
+
+.left-info-bottom:hover {
+  background: rgba(229, 169, 59, 0.04);
+  border-color: rgba(229, 169, 59, 0.25);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(229, 169, 59, 0.08);
+}
+
+.left-sub-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-white);
+  margin-bottom: 6px;
+}
+
+.left-sub-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* Staggered Slide & Fade Keyframes */
+@keyframes slideInTop {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideInBottom {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ==========================================================================
+   4. RIGHT SIDE: Police Login Section (50% Width)
+   ========================================================================== */
+
+.login-section {
+  flex: 1;                           /* Takes 50% width on desktop */
+  width: 50%;
+  min-height: 100vh;
+  background-color: var(--bg-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 440px;                  /* Accommodates split-flap board width nicely */
+  display: flex;
+  flex-direction: column;
+}
+
+.login-header {
+  margin-bottom: 28px;
+}
+
+/* ==========================================================================
+   SPLIT-FLAP (FLIP CLOCK) 3D TEXT TRANSITION EFFECT - PERFECT ALIGNMENT
+   ========================================================================== */
+
+.split-flap-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 14px;
+  perspective: 700px;
+  min-height: 44px;
+}
+
+/* Individual Character Card Slot */
+.flap-card {
+  position: relative;
+  width: 24px;
+  height: 40px;
+  background-color: #191c24;
+  border-radius: 5px;
+  border: 1px solid #292e3c;
+  font-family: 'Inter', monospace, sans-serif;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--gold-primary);
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  transform-style: preserve-3d;
+  user-select: none;
+}
+
+/* Space Card (Transparent Gap) */
+.flap-card.space-card {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  width: 12px;
+}
+
+.flap-card.space-card::after {
+  display: none;
+}
+
+/* Horizontal Split Line down the middle */
+.flap-card::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.85);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
+  z-index: 10;
+  transform: translateY(-50%);
+}
+
+/* Static Halves (Top & Bottom) */
+.flap-half {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 50%;
+  overflow: hidden;
+  background-color: #191c24;
+  backface-visibility: hidden;
+}
+
+.flap-half.top {
+  top: 0;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+
+.flap-half.top span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.flap-half.bottom {
+  bottom: 0;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+
+.flap-half.bottom span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* 3D Animated Leaves */
+.flap-leaf {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 50%;
+  overflow: hidden;
+  background-color: #1b1e28;
+  z-index: 5;
+  backface-visibility: hidden;
+  transition: transform 0.12s linear;
+}
+
+.flap-leaf.leaf-top {
+  top: 0;
+  transform-origin: bottom center;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  transform: rotateX(0deg);
+}
+
+.flap-leaf.leaf-top span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.flap-leaf.leaf-bottom {
+  bottom: 0;
+  transform-origin: top center;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  transform: rotateX(90deg);
+}
+
+.flap-leaf.leaf-bottom span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* Subtitle Below Title */
+.login-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.signup-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-white);
+  letter-spacing: -0.02em;
+  margin: 0 0 8px 0;
+}
+
+.auth-view {
+  width: 100%;
+  animation: fadeInView 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInView {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   6. Form Input Fields
+   ========================================================================== */
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-white);
+  margin-bottom: 8px;
+}
+
+.label-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.label-wrapper .form-label {
+  margin-bottom: 0;
+}
+
+.forgot-password {
+  font-size: 0.85rem;
+  color: var(--gold-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.forgot-password:hover {
+  color: var(--gold-light);
+  text-decoration: underline;
+}
+
+.form-input {
+  width: 100%;
+  height: 50px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-input);
+  padding: 0 20px;
+  font-size: 0.925rem;
+  font-family: inherit;
+  color: var(--text-white);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input::placeholder {
+  color: #586175;
+}
+
+.form-input:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px rgba(229, 169, 59, 0.2);
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .form-input {
+  padding-right: 50px;
+}
+
+.eye-icon-btn {
+  position: absolute;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.eye-icon-btn:hover {
+  color: var(--gold-primary);
+}
+
+/* ==========================================================================
+   7. Main Login Button
+   ========================================================================== */
+
+.btn-login {
+  width: 100%;
+  height: 50px;
+  background: var(--gold-gradient);
+  color: var(--text-dark);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 10px;
+  box-shadow: 0 4px 16px rgba(229, 169, 59, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-login:hover {
+  background: var(--gold-gradient-hover);
+  box-shadow: 0 6px 22px rgba(229, 169, 59, 0.38);
+  transform: translateY(-1px);
+}
+
+.btn-login:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(229, 169, 59, 0.2);
+}
+
+/* ==========================================================================
+   8. Social Login Section
+   ========================================================================== */
+
+.social-login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+  margin-bottom: 28px;
+}
+
+.social-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.social-btn:hover {
+  border-color: var(--gold-primary);
+  background-color: #1e222d;
+  transform: translateY(-2px);
+}
+
+.social-btn:active {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   9. Signup Footer Link
+   ========================================================================== */
+
+.signup-footer {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.signup-link {
+  color: var(--gold-primary);
+  text-decoration: none;
+  font-weight: 600;
+  margin-left: 4px;
+  transition: color 0.2s ease;
+}
+
+.signup-link:hover {
+  color: var(--gold-light);
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   10. Responsive Behavior (Mobile & Tablet Stacking)
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  .page-container {
+    flex-direction: column;
+  }
+
+  .left-section {
+    width: 100%;
+    min-height: auto;
+    padding: 36px 24px 16px 24px;
+    justify-content: flex-start;
+    gap: 20px;
+  }
+
+  .police-illustration,
+  .hero-image {
+    max-width: 90%;
+    min-height: 180px;
+    max-height: 280px;
+  }
+
+  .login-section {
+    width: 100%;
+    min-height: auto;
+    padding: 24px 20px 48px 20px;
+  }
+
+  .flap-card {
+    width: 18px;
+    height: 32px;
+    font-size: 0.95rem;
+  }
+}
