@@ -53,7 +53,7 @@ html, body {
 .role-header {
   text-align: center;
   margin-bottom: 56px;
-  animation: fadeInDown 0.8s var(--ease-cubic) forwards;
+  animation: fadeIn 0.8s var(--ease-cubic) forwards;
 }
 
 .header-badge {
@@ -129,7 +129,7 @@ html, body {
   position: relative;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  animation: fadeInUp 0.8s var(--ease-cubic) forwards;
+  animation: fadeIn 0.8s var(--ease-cubic) forwards;
   
   /* Pure visual transition - strictly NO position, transform, width or height changes */
   transition: background-color 350ms var(--ease-cubic),
@@ -272,6 +272,16 @@ html, body {
   color: #586175;
 }
 
+/* Pure Opacity Fade-in Animation (Zero Movement - 100% Fixed Position Always) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Animations */
 @keyframes fadeInDown {
   from {
@@ -287,11 +297,9 @@ html, body {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(24px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
