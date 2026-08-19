@@ -661,3 +661,35 @@ html, body {
     font-size: 0.95rem;
   }
 }
+
+/* Inline Auth Message Styling (Matches Dark/Gold Theme) */
+.auth-message {
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-top: 10px;
+  margin-bottom: 6px;
+  text-align: center;
+  line-height: 1.4;
+  animation: fadeInView 0.25s ease forwards;
+}
+
+.auth-message.error {
+  background-color: rgba(234, 67, 53, 0.12);
+  border: 1px solid rgba(234, 67, 53, 0.35);
+  color: #ff6b6b;
+}
+
+.auth-message.success {
+  background-color: rgba(229, 169, 59, 0.12);
+  border: 1px solid rgba(229, 169, 59, 0.35);
+  color: var(--gold-light);
+}
+
+.btn-login:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}

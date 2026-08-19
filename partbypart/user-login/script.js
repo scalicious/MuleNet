@@ -160,4 +160,115 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  /* ==========================================================================
+     SUPABASE AUTHENTICATION INTEGRATION (USER LOGIN ONLY)
+     ========================================================================== */
+  const SUPABASE_URL = 'https://jkcgutjknjykqasenwqq.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_PtBOjVSdVe4eKPfBDE8y6g_RUGPzvG6';
+
+  let supabaseClient = null;
+  if (window.supabase && window.supabase.createClient) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  }
+
+  const loginForm = signInView ? signInView.querySelector('form.login-form') : null;
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const loginBtn = document.getElementById('loginBtn') || (loginForm ? loginForm.querySelector('button[type="submit"]') : null);
+  const authMessage = document.getElementById('authMessage');
+
+  function showAuthMessage(msg, type = 'error') {
+    if (!authMessage) return;
+    authMessage.textContent = msg;
+    authMessage.className = `auth-message ${type}`;
+    authMessage.style.display = 'block';
+  }
+
+  function clearAuthMessage() {
+    if (!authMessage) return;
+    authMessage.textContent = '';
+    authMessage.style.display = 'none';
+  }
+
+  // Connect Existing Login Form to Supabase Auth
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearAuthMessage();
+
+      const email = emailInput ? emailInput.value.trim() : '';
+      const password = passwordInput ? passwordInput.value : '';
+
+      if (!email || !password) {
+        showAuthMessage('Please enter both email and password.', 'error');
+        return;
+      }
+
+      if (!supabaseClient) {
+        showAuthMessage('Supabase client is initializing. Please check connection.', 'error');
+        return;
+      }
+
+      // Button Loading State
+      if (loginBtn) {
+        loginBtn.disabled = true;
+        loginBtn.dataset.originalText = loginBtn.textContent;
+        loginBtn.textContent = 'Authenticating...';
+      }
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password,
+        });
+
+        if (error) {
+          showAuthMessage(error.message || 'Authentication failed. Invalid login credentials.', 'error');
+          if (loginBtn) {
+            loginBtn.disabled = false;
+            loginBtn.textContent = loginBtn.dataset.originalText || 'Login';
+          }
+        } else if (data && data.session) {
+          showAuthMessage(`Successfully logged in as ${data.user.email}`, 'success');
+          if (loginBtn) {
+            loginBtn.textContent = 'Authenticated ✓';
+          }
+        }
+      } catch (err) {
+        showAuthMessage('An unexpected error occurred during authentication.', 'error');
+        if (loginBtn) {
+          loginBtn.disabled = false;
+          loginBtn.textContent = loginBtn.dataset.originalText || 'Login';
+        }
+      }
+    });
+  }
+
+  // Session Persistence Checking
+  if (supabaseClient) {
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+      if (session && session.user) {
+        showAuthMessage(`Logged in as ${session.user.email}`, 'success');
+        if (loginBtn) {
+          loginBtn.textContent = 'Authenticated ✓';
+        }
+      }
+    });
+
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        showAuthMessage(`Logged in as ${session.user.email}`, 'success');
+        if (loginBtn) {
+          loginBtn.textContent = 'Authenticated ✓';
+        }
+      } else if (event === 'SIGNED_OUT') {
+        clearAuthMessage();
+        if (loginBtn) {
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Login';
+        }
+      }
+    });
+  }
 });
