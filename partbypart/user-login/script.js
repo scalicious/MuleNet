@@ -115,40 +115,73 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(transitionToNextPhrase, 3500);
 
   /* ==========================================================================
-     Frontend View Toggle (Sign In <-> Sign Up State)
+     Frontend View Toggle (Sign In <-> Sign Up <-> Forgot Password State)
      ========================================================================== */
   let isSignUp = false;
+  let isSigningUp = false; // Flag to prevent auto-redirect while completing password steps
 
   const signInView = document.getElementById('signInView');
   const signUpView = document.getElementById('signUpView');
+  const forgotPasswordView = document.getElementById('forgotPasswordView');
   const toSignUpBtn = document.getElementById('toSignUpBtn');
   const toSignInBtn = document.getElementById('toSignInBtn');
+  const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+  const forgotToSignInBtn = document.getElementById('forgotToSignInBtn');
 
-  function updateFormView() {
-    if (isSignUp) {
-      if (signInView) signInView.style.display = 'none';
-      if (signUpView) signUpView.style.display = 'block';
-    } else {
-      if (signUpView) signUpView.style.display = 'none';
-      if (signInView) signInView.style.display = 'block';
-    }
+  function showActiveView(viewName) {
+    if (signInView) signInView.style.display = viewName === 'signIn' ? 'block' : 'none';
+    if (signUpView) signUpView.style.display = viewName === 'signUp' ? 'block' : 'none';
+    if (forgotPasswordView) forgotPasswordView.style.display = viewName === 'forgotPassword' ? 'block' : 'none';
   }
 
-  if (toSignUpBtn) {
-    toSignUpBtn.addEventListener('click', (e) => {
+  document.querySelectorAll('#toSignUpBtn, .to-signup-link').forEach(btn => {
+    btn.addEventListener('click', (e) => {
       e.preventDefault();
       isSignUp = true;
-      updateFormView();
+      isSigningUp = true;
+      showActiveView('signUp');
     });
-  }
+  });
 
-  if (toSignInBtn) {
-    toSignInBtn.addEventListener('click', (e) => {
+  document.querySelectorAll('#toSignInBtn, .to-signin-link').forEach(btn => {
+    btn.addEventListener('click', (e) => {
       e.preventDefault();
       isSignUp = false;
-      updateFormView();
+      isSigningUp = false;
+      showActiveView('signIn');
     });
-  }
+  });
+
+  document.querySelectorAll('#forgotPasswordBtn, .forgot-password').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      isSignUp = false;
+      isSigningUp = false;
+
+      // Reset forgot steps to step 1
+      const forgotStep1 = document.getElementById('forgotStep1');
+      const forgotStep2 = document.getElementById('forgotStep2');
+      const forgotStep3 = document.getElementById('forgotStep3');
+      if (forgotStep1) forgotStep1.style.display = 'block';
+      if (forgotStep2) forgotStep2.style.display = 'none';
+      if (forgotStep3) forgotStep3.style.display = 'none';
+
+      clearMsg(document.getElementById('forgotEmailMsg'));
+      clearMsg(document.getElementById('forgotOtpMsg'));
+      clearMsg(document.getElementById('resetPasswordMsg'));
+
+      showActiveView('forgotPassword');
+    });
+  });
+
+  document.querySelectorAll('#forgotToSignInBtn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      isSignUp = false;
+      isSigningUp = false;
+      showActiveView('signIn');
+    });
+  });
 
   // Password Eye Icon Toggle
   document.querySelectorAll('.eye-icon-btn').forEach(btn => {
@@ -162,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ==========================================================================
-     SUPABASE AUTHENTICATION INTEGRATION (USER LOGIN & STEPPED SIGNUP)
+     SUPABASE AUTHENTICATION INTEGRATION (USER LOGIN, SIGNUP & FORGOT PASSWORD)
      ========================================================================== */
   const SUPABASE_URL = 'https://jkcgutjknjykqasenwqq.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_PtBOjVSdVe4eKPfBDE8y6g_RUGPzvG6';
@@ -196,10 +229,33 @@ document.addEventListener('DOMContentLoaded', () => {
     container.style.display = 'none';
   }
 
-  // Email format validation (rejects test@, abc, @gmail.com, hello@, etc.)
+  // Email format validation
   function isValidEmailFormat(email) {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
+  }
+
+  // Check whether an email is already associated with an existing Supabase Auth user
+  async function isEmailRegistered(email) {
+    if (!email) return false;
+    const normalized = email.trim().toLowerCase();
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_PUBLISHABLE_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: normalized, password: 'DummyCheckPassword123!' })
+      });
+      const data = await res.json();
+      if (data && data.id && Array.isArray(data.identities) && data.identities.length === 0) {
+        return true; // Already registered
+      }
+      return false;
+    } catch (err) {
+      return false;
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -210,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       clearMsg(authMessage);
 
-      const email = emailInput ? emailInput.value.trim() : '';
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
       const password = passwordInput ? passwordInput.value : '';
 
       if (!email || !password) {
@@ -253,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }, 400);
         }
       } catch (err) {
-        showMsg(authMessage, 'Something went wrong. Please try again.', 'error');
+        showMsg(authMessage, 'Invalid email or password.', 'error');
         if (loginBtn) {
           loginBtn.disabled = false;
           loginBtn.textContent = loginBtn.dataset.originalText || 'Login';
@@ -263,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --------------------------------------------------------------------------
-  // 2. STEPPED USER SIGN-UP FLOW (EMAIL -> OTP -> PASSWORD -> /user-home)
+  // 2. STEPPED USER SIGN-UP FLOW (CHECK REGISTERED -> EMAIL -> OTP -> PASSWORD)
   // --------------------------------------------------------------------------
   const signupStep1 = document.getElementById('signupStep1');
   const signupStep2 = document.getElementById('signupStep2');
@@ -278,6 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const otpInput = document.getElementById('otp-input');
   const verifyOtpBtn = document.getElementById('verifyOtpBtn');
   const resendOtpBtn = document.getElementById('resendOtpBtn');
+  const changeEmailBtn = document.getElementById('changeEmailBtn');
   const otpMsg = document.getElementById('otpMsg');
   const displayTargetEmail = document.getElementById('displayTargetEmail');
 
@@ -288,14 +345,72 @@ document.addEventListener('DOMContentLoaded', () => {
   const passwordMsg = document.getElementById('passwordMsg');
 
   let pendingSignupEmail = '';
+  let resendTimer = null;
+  let resendCooldown = 0;
 
-  // STEP 1: Validate Email & Send OTP
+  // Flags to prevent duplicate request execution
+  let isSendingEmailOtp = false;
+  let isResendingOtp = false;
+
+  function startResendCooldown() {
+    if (resendTimer) {
+      clearInterval(resendTimer);
+      resendTimer = null;
+    }
+    resendCooldown = 60;
+
+    if (resendOtpBtn) {
+      resendOtpBtn.style.pointerEvents = 'none';
+      resendOtpBtn.style.opacity = '0.5';
+      resendOtpBtn.style.cursor = 'not-allowed';
+      resendOtpBtn.style.textDecoration = 'none';
+      resendOtpBtn.textContent = `Resend OTP in ${resendCooldown}s`;
+    }
+
+    resendTimer = setInterval(() => {
+      resendCooldown--;
+      if (resendCooldown > 0) {
+        if (resendOtpBtn) {
+          resendOtpBtn.textContent = `Resend OTP in ${resendCooldown}s`;
+        }
+      } else {
+        clearInterval(resendTimer);
+        resendTimer = null;
+        if (resendOtpBtn) {
+          resendOtpBtn.style.pointerEvents = 'auto';
+          resendOtpBtn.style.opacity = '1';
+          resendOtpBtn.style.cursor = 'pointer';
+          resendOtpBtn.style.textDecoration = '';
+          resendOtpBtn.textContent = 'Resend OTP';
+        }
+      }
+    }, 1000);
+  }
+
+  function stopResendCooldown() {
+    if (resendTimer) {
+      clearInterval(resendTimer);
+      resendTimer = null;
+    }
+    resendCooldown = 0;
+    if (resendOtpBtn) {
+      resendOtpBtn.style.pointerEvents = 'auto';
+      resendOtpBtn.style.opacity = '1';
+      resendOtpBtn.style.cursor = 'pointer';
+      resendOtpBtn.style.textDecoration = '';
+      resendOtpBtn.textContent = 'Resend OTP';
+    }
+  }
+
+  // STEP 1: Validate Email, Check Registration & Send OTP
   if (signupEmailForm) {
     signupEmailForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearMsg(signupEmailMsg);
 
-      const email = signupEmailInput ? signupEmailInput.value.trim() : '';
+      if (isSendingEmailOtp) return;
+
+      const email = signupEmailInput ? signupEmailInput.value.trim().toLowerCase() : '';
 
       if (!email || !isValidEmailFormat(email)) {
         showMsg(signupEmailMsg, 'Please enter a valid email address.', 'error');
@@ -303,18 +418,34 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (!supabaseClient) {
-        showMsg(signupEmailMsg, 'Something went wrong. Please try again.', 'error');
+        showMsg(signupEmailMsg, 'Failed to send verification code. Please try again.', 'error');
         return;
       }
 
-      pendingSignupEmail = email;
+      isSendingEmailOtp = true;
 
       if (sendOtpBtn) {
         sendOtpBtn.disabled = true;
-        sendOtpBtn.textContent = 'Sending OTP...';
+        sendOtpBtn.textContent = 'Checking email...';
       }
 
       try {
+        const registered = await isEmailRegistered(email);
+
+        if (registered) {
+          showMsg(signupEmailMsg, 'This email is already registered. Please sign in.', 'error');
+          if (sendOtpBtn) {
+            sendOtpBtn.disabled = false;
+            sendOtpBtn.textContent = 'Send Verification Code';
+          }
+          isSendingEmailOtp = false;
+          return;
+        }
+
+        pendingSignupEmail = email;
+        isSigningUp = true;
+        sendOtpBtn.textContent = 'Sending OTP...';
+
         const { error } = await supabaseClient.auth.signInWithOtp({
           email: pendingSignupEmail,
           options: {
@@ -323,25 +454,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (error) {
-          showMsg(signupEmailMsg, error.message || 'Failed to send OTP. Please try again.', 'error');
+          showMsg(signupEmailMsg, 'Failed to send verification code. Please try again.', 'error');
           if (sendOtpBtn) {
             sendOtpBtn.disabled = false;
             sendOtpBtn.textContent = 'Send Verification Code';
           }
         } else {
-          // Transition to Step 2: OTP Verification
           if (displayTargetEmail) displayTargetEmail.textContent = pendingSignupEmail;
           if (signupStep1) signupStep1.style.display = 'none';
           if (signupStep2) signupStep2.style.display = 'block';
+          if (otpInput) otpInput.value = '';
           clearMsg(otpMsg);
-          showMsg(otpMsg, 'Verification code sent to your email!', 'success');
+          startResendCooldown();
         }
       } catch (err) {
-        showMsg(signupEmailMsg, 'Something went wrong. Please try again.', 'error');
+        showMsg(signupEmailMsg, 'Failed to send verification code. Please try again.', 'error');
         if (sendOtpBtn) {
           sendOtpBtn.disabled = false;
           sendOtpBtn.textContent = 'Send Verification Code';
         }
+      } finally {
+        isSendingEmailOtp = false;
+      }
+    });
+  }
+
+  // Change Email Link
+  if (changeEmailBtn) {
+    changeEmailBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      stopResendCooldown();
+      if (otpInput) otpInput.value = '';
+      clearMsg(otpMsg);
+      clearMsg(signupEmailMsg);
+
+      if (sendOtpBtn) {
+        sendOtpBtn.disabled = false;
+        sendOtpBtn.textContent = 'Send Verification Code';
+      }
+      isSendingEmailOtp = false;
+      isResendingOtp = false;
+
+      if (signupStep2) signupStep2.style.display = 'none';
+      if (signupStep1) signupStep1.style.display = 'block';
+      if (signupEmailInput) {
+        signupEmailInput.focus();
+        signupEmailInput.select();
       }
     });
   }
@@ -350,22 +508,27 @@ document.addEventListener('DOMContentLoaded', () => {
   if (resendOtpBtn) {
     resendOtpBtn.addEventListener('click', async (e) => {
       e.preventDefault();
+      if (resendCooldown > 0 || isResendingOtp || !pendingSignupEmail || !supabaseClient) return;
+
+      isResendingOtp = true;
       clearMsg(otpMsg);
-      if (!pendingSignupEmail || !supabaseClient) return;
+      startResendCooldown();
 
-      resendOtpBtn.textContent = 'Resending...';
+      try {
+        const { error } = await supabaseClient.auth.signInWithOtp({
+          email: pendingSignupEmail,
+          options: { shouldCreateUser: true }
+        });
 
-      const { error } = await supabaseClient.auth.signInWithOtp({
-        email: pendingSignupEmail,
-        options: { shouldCreateUser: true }
-      });
-
-      resendOtpBtn.textContent = 'Resend OTP';
-
-      if (error) {
-        showMsg(otpMsg, 'Failed to resend OTP. Please try again.', 'error');
-      } else {
-        showMsg(otpMsg, 'A new OTP code has been sent to your email.', 'success');
+        if (error) {
+          showMsg(otpMsg, 'Failed to send verification code. Please try again.', 'error');
+        } else {
+          showMsg(otpMsg, 'A new OTP code has been sent to your email.', 'success');
+        }
+      } catch (err) {
+        showMsg(otpMsg, 'Failed to send verification code. Please try again.', 'error');
+      } finally {
+        isResendingOtp = false;
       }
     });
   }
@@ -379,7 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const code = otpInput ? otpInput.value.trim() : '';
 
       if (!code || code.length < 6) {
-        showMsg(otpMsg, 'Please enter the complete 6-digit OTP code.', 'error');
+        showMsg(otpMsg, 'Invalid or expired OTP.', 'error');
         return;
       }
 
@@ -407,7 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
             verifyOtpBtn.textContent = 'Verify Code';
           }
         } else {
-          // OTP Verified! Transition to Step 3: Create Password
+          isSigningUp = true;
           if (signupStep2) signupStep2.style.display = 'none';
           if (signupStep3) signupStep3.style.display = 'block';
           clearMsg(passwordMsg);
@@ -468,6 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
             createAccountBtn.textContent = 'Create Account';
           }
         } else {
+          isSigningUp = false;
           showMsg(passwordMsg, 'Account created successfully! Redirecting...', 'success');
           setTimeout(() => {
             window.location.href = USER_HOME_URL;
@@ -484,7 +648,290 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --------------------------------------------------------------------------
-  // 3. GOOGLE & APPLE OAUTH AUTHENTICATION
+  // 3. STEPPED FORGOT PASSWORD FLOW (CHECK ACCOUNT -> EMAIL -> OTP -> NEW PASSWORD)
+  // --------------------------------------------------------------------------
+  const forgotEmailForm = document.getElementById('forgotEmailForm');
+  const forgotEmailInput = document.getElementById('forgot-email');
+  const sendForgotOtpBtn = document.getElementById('sendForgotOtpBtn');
+  const forgotEmailMsg = document.getElementById('forgotEmailMsg');
+
+  const forgotOtpForm = document.getElementById('forgotOtpForm');
+  const forgotOtpInput = document.getElementById('forgot-otp-input');
+  const verifyForgotOtpBtn = document.getElementById('verifyForgotOtpBtn');
+  const resendForgotOtpBtn = document.getElementById('resendForgotOtpBtn');
+  const forgotOtpMsg = document.getElementById('forgotOtpMsg');
+  const displayForgotTargetEmail = document.getElementById('displayForgotTargetEmail');
+
+  const resetPasswordForm = document.getElementById('resetPasswordForm');
+  const resetPasswordInput = document.getElementById('reset-password');
+  const confirmResetPasswordInput = document.getElementById('confirm-reset-password');
+  const saveNewPasswordBtn = document.getElementById('saveNewPasswordBtn');
+  const resetPasswordMsg = document.getElementById('resetPasswordMsg');
+
+  let pendingForgotEmail = '';
+  let isSendingForgotOtp = false;
+  let forgotResendTimer = null;
+  let forgotResendCooldown = 0;
+
+  function startForgotResendCooldown() {
+    if (forgotResendTimer) {
+      clearInterval(forgotResendTimer);
+      forgotResendTimer = null;
+    }
+    forgotResendCooldown = 60;
+
+    if (resendForgotOtpBtn) {
+      resendForgotOtpBtn.style.pointerEvents = 'none';
+      resendForgotOtpBtn.style.opacity = '0.5';
+      resendForgotOtpBtn.style.cursor = 'not-allowed';
+      resendForgotOtpBtn.style.textDecoration = 'none';
+      resendForgotOtpBtn.textContent = `Resend OTP in ${forgotResendCooldown}s`;
+    }
+
+    forgotResendTimer = setInterval(() => {
+      forgotResendCooldown--;
+      if (forgotResendCooldown > 0) {
+        if (resendForgotOtpBtn) {
+          resendForgotOtpBtn.textContent = `Resend OTP in ${forgotResendCooldown}s`;
+        }
+      } else {
+        clearInterval(forgotResendTimer);
+        forgotResendTimer = null;
+        if (resendForgotOtpBtn) {
+          resendForgotOtpBtn.style.pointerEvents = 'auto';
+          resendForgotOtpBtn.style.opacity = '1';
+          resendForgotOtpBtn.style.cursor = 'pointer';
+          resendForgotOtpBtn.style.textDecoration = '';
+          resendForgotOtpBtn.textContent = 'Resend OTP';
+        }
+      }
+    }, 1000);
+  }
+
+  // Forgot Step 1: Submit Email
+  if (forgotEmailForm) {
+    forgotEmailForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMsg(forgotEmailMsg);
+
+      if (isSendingForgotOtp) return;
+
+      const email = forgotEmailInput ? forgotEmailInput.value.trim().toLowerCase() : '';
+
+      if (!email || !isValidEmailFormat(email)) {
+        showMsg(forgotEmailMsg, 'Please enter a valid email address.', 'error');
+        return;
+      }
+
+      if (!supabaseClient) {
+        showMsg(forgotEmailMsg, 'Failed to send verification code. Please try again.', 'error');
+        return;
+      }
+
+      isSendingForgotOtp = true;
+      if (sendForgotOtpBtn) {
+        sendForgotOtpBtn.disabled = true;
+        sendForgotOtpBtn.textContent = 'Checking account...';
+      }
+
+      try {
+        const registered = await isEmailRegistered(email);
+
+        if (!registered) {
+          showMsg(forgotEmailMsg, 'No account found with this email. Please check your email or create an account.', 'error');
+          if (sendForgotOtpBtn) {
+            sendForgotOtpBtn.disabled = false;
+            sendForgotOtpBtn.textContent = 'Send Verification Code';
+          }
+          isSendingForgotOtp = false;
+          return;
+        }
+
+        pendingForgotEmail = email;
+        isSigningUp = true; // Prevent auto-redirect during forgot password steps
+        sendForgotOtpBtn.textContent = 'Sending OTP...';
+
+        const { error } = await supabaseClient.auth.signInWithOtp({
+          email: pendingForgotEmail,
+          options: { shouldCreateUser: false }
+        });
+
+        if (error) {
+          showMsg(forgotEmailMsg, 'Failed to send verification code. Please try again.', 'error');
+          if (sendForgotOtpBtn) {
+            sendForgotOtpBtn.disabled = false;
+            sendForgotOtpBtn.textContent = 'Send Verification Code';
+          }
+        } else {
+          if (displayForgotTargetEmail) displayForgotTargetEmail.textContent = pendingForgotEmail;
+          const forgotStep1 = document.getElementById('forgotStep1');
+          const forgotStep2 = document.getElementById('forgotStep2');
+          if (forgotStep1) forgotStep1.style.display = 'none';
+          if (forgotStep2) forgotStep2.style.display = 'block';
+          if (forgotOtpInput) forgotOtpInput.value = '';
+          clearMsg(forgotOtpMsg);
+          startForgotResendCooldown();
+        }
+      } catch (err) {
+        showMsg(forgotEmailMsg, 'Failed to send verification code. Please try again.', 'error');
+        if (sendForgotOtpBtn) {
+          sendForgotOtpBtn.disabled = false;
+          sendForgotOtpBtn.textContent = 'Send Verification Code';
+        }
+      } finally {
+        isSendingForgotOtp = false;
+      }
+    });
+  }
+
+  // Forgot Step 2: Verify OTP
+  if (forgotOtpForm) {
+    forgotOtpForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMsg(forgotOtpMsg);
+
+      const code = forgotOtpInput ? forgotOtpInput.value.trim() : '';
+
+      if (!code || code.length < 6) {
+        showMsg(forgotOtpMsg, 'Invalid or expired OTP.', 'error');
+        return;
+      }
+
+      if (!supabaseClient) {
+        showMsg(forgotOtpMsg, 'Something went wrong. Please try again.', 'error');
+        return;
+      }
+
+      if (verifyForgotOtpBtn) {
+        verifyForgotOtpBtn.disabled = true;
+        verifyForgotOtpBtn.textContent = 'Verifying...';
+      }
+
+      try {
+        const { data, error } = await supabaseClient.auth.verifyOtp({
+          email: pendingForgotEmail,
+          token: code,
+          type: 'email'
+        });
+
+        if (error || !data.session) {
+          showMsg(forgotOtpMsg, 'Invalid or expired OTP.', 'error');
+          if (verifyForgotOtpBtn) {
+            verifyForgotOtpBtn.disabled = false;
+            verifyForgotOtpBtn.textContent = 'Verify Code';
+          }
+        } else {
+          isSigningUp = true;
+          const forgotStep2 = document.getElementById('forgotStep2');
+          const forgotStep3 = document.getElementById('forgotStep3');
+          if (forgotStep2) forgotStep2.style.display = 'none';
+          if (forgotStep3) forgotStep3.style.display = 'block';
+          clearMsg(resetPasswordMsg);
+        }
+      } catch (err) {
+        showMsg(forgotOtpMsg, 'Invalid or expired OTP.', 'error');
+        if (verifyForgotOtpBtn) {
+          verifyForgotOtpBtn.disabled = false;
+          verifyForgotOtpBtn.textContent = 'Verify Code';
+        }
+      }
+    });
+  }
+
+  // Forgot Resend OTP link
+  if (resendForgotOtpBtn) {
+    resendForgotOtpBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (forgotResendCooldown > 0 || !pendingForgotEmail || !supabaseClient) return;
+
+      clearMsg(forgotOtpMsg);
+      startForgotResendCooldown();
+
+      try {
+        const { error } = await supabaseClient.auth.signInWithOtp({
+          email: pendingForgotEmail,
+          options: { shouldCreateUser: false }
+        });
+
+        if (error) {
+          showMsg(forgotOtpMsg, 'Failed to send verification code. Please try again.', 'error');
+        } else {
+          showMsg(forgotOtpMsg, 'A new OTP code has been sent to your email.', 'success');
+        }
+      } catch (err) {
+        showMsg(forgotOtpMsg, 'Failed to send verification code. Please try again.', 'error');
+      }
+    });
+  }
+
+  // Forgot Step 3: Save New Password
+  if (resetPasswordForm) {
+    resetPasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMsg(resetPasswordMsg);
+
+      const pass = resetPasswordInput ? resetPasswordInput.value : '';
+      const confirmPass = confirmResetPasswordInput ? confirmResetPasswordInput.value : '';
+
+      if (!pass || !confirmPass) {
+        showMsg(resetPasswordMsg, 'Please fill in both password fields.', 'error');
+        return;
+      }
+
+      if (pass.length < 6) {
+        showMsg(resetPasswordMsg, 'Password must be at least 6 characters.', 'error');
+        return;
+      }
+
+      if (pass !== confirmPass) {
+        showMsg(resetPasswordMsg, 'Passwords do not match.', 'error');
+        return;
+      }
+
+      if (!supabaseClient) {
+        showMsg(resetPasswordMsg, 'Something went wrong. Please try again.', 'error');
+        return;
+      }
+
+      if (saveNewPasswordBtn) {
+        saveNewPasswordBtn.disabled = true;
+        saveNewPasswordBtn.textContent = 'Saving Password...';
+      }
+
+      try {
+        const { data, error } = await supabaseClient.auth.updateUser({
+          password: pass
+        });
+
+        if (error) {
+          showMsg(resetPasswordMsg, error.message || 'Failed to update password. Please try again.', 'error');
+          if (saveNewPasswordBtn) {
+            saveNewPasswordBtn.disabled = false;
+            saveNewPasswordBtn.textContent = 'Save New Password';
+          }
+        } else {
+          isSigningUp = false;
+          // Sign out so user can sign in with new password
+          await supabaseClient.auth.signOut();
+          showMsg(resetPasswordMsg, 'Password updated successfully! Redirecting to sign in...', 'success');
+          setTimeout(() => {
+            showActiveView('signIn');
+            if (emailInput) emailInput.value = pendingForgotEmail;
+            showMsg(authMessage, 'Password updated successfully. Please login with your new password.', 'success');
+          }, 1200);
+        }
+      } catch (err) {
+        showMsg(resetPasswordMsg, 'Failed to update password. Please try again.', 'error');
+        if (saveNewPasswordBtn) {
+          saveNewPasswordBtn.disabled = false;
+          saveNewPasswordBtn.textContent = 'Save New Password';
+        }
+      }
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // 4. GOOGLE & APPLE OAUTH AUTHENTICATION
   // --------------------------------------------------------------------------
   const googleBtns = document.querySelectorAll('#googleLoginBtn, #googleSignUpBtn, [aria-label*="Google"]');
   const appleBtns = document.querySelectorAll('#appleLoginBtn, #appleSignUpBtn, [aria-label*="Apple"]');
@@ -542,18 +989,17 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --------------------------------------------------------------------------
-  // 4. SESSION PERSISTENCE & AUTO-REDIRECT
+  // 5. SESSION PERSISTENCE & AUTO-REDIRECT
   // --------------------------------------------------------------------------
   if (supabaseClient) {
     supabaseClient.auth.getSession().then(({ data: { session } }) => {
-      if (session && session.user) {
-        // Active session exists - redirect to user home
+      if (session && session.user && !isSigningUp) {
         window.location.href = USER_HOME_URL;
       }
     });
 
     supabaseClient.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session && !window.location.pathname.includes('user-home')) {
+      if (event === 'SIGNED_IN' && session && !isSigningUp && !window.location.pathname.includes('user-home')) {
         window.location.href = USER_HOME_URL;
       }
     });

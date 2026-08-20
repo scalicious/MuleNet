@@ -94,32 +94,78 @@
     <h1>User Home</h1>
     <p>Logged in as: <span id="userEmail" class="user-email">Loading...</span></p>
     <button id="logoutBtn" class="btn-logout">Sign Out</button>
+    <div id="homeError" class="home-error" style="display: none; color: #ff6b6b; background-color: rgba(234, 67, 53, 0.12); border: 1px solid rgba(234, 67, 53, 0.35); padding: 10px 14px; border-radius: 12px; margin-top: 14px; font-size: 0.85rem;"></div>
   </div>
 
   <script>
     const SUPABASE_URL = 'https://jkcgutjknjykqasenwqq.supabase.co';
     const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_PtBOjVSdVe4eKPfBDE8y6g_RUGPzvG6';
 
-    const supabase = window.supabase
+    const supabaseClient = window.supabase
       ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
       : null;
 
+    const LOGIN_PAGE_URL = '../user-login/index.html';
+
     async function checkSession() {
-      if (!supabase) return;
-      const { data: { session } } = await supabase.auth.getSession();
+      if (!supabaseClient) {
+        window.location.href = LOGIN_PAGE_URL;
+        return;
+      }
+      const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) {
         // Not authenticated, redirect to User Login
-        window.location.href = '../user-login/index.html';
+        window.location.href = LOGIN_PAGE_URL;
       } else {
         document.getElementById('userEmail').textContent = session.user.email || 'Authenticated User';
       }
     }
 
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      if (supabase) {
-        await supabase.auth.signOut();
+    if (supabaseClient) {
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (!session || event === 'SIGNED_OUT') {
+          window.location.href = LOGIN_PAGE_URL;
+        }
+      });
+    }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    const homeError = document.getElementById('homeError');
+
+    logoutBtn.addEventListener('click', async () => {
+      if (homeError) homeError.style.display = 'none';
+      if (logoutBtn) {
+        logoutBtn.disabled = true;
+        logoutBtn.textContent = 'Signing Out...';
       }
-      window.location.href = '../user-login/index.html';
+
+      if (supabaseClient) {
+        try {
+          const { error } = await supabaseClient.auth.signOut();
+          if (error) {
+            if (homeError) {
+              homeError.textContent = error.message || 'Failed to sign out. Please try again.';
+              homeError.style.display = 'block';
+            }
+            if (logoutBtn) {
+              logoutBtn.disabled = false;
+              logoutBtn.textContent = 'Sign Out';
+            }
+            return;
+          }
+        } catch (err) {
+          if (homeError) {
+            homeError.textContent = 'Failed to sign out. Please try again.';
+            homeError.style.display = 'block';
+          }
+          if (logoutBtn) {
+            logoutBtn.disabled = false;
+            logoutBtn.textContent = 'Sign Out';
+          }
+          return;
+        }
+      }
+      window.location.href = LOGIN_PAGE_URL;
     });
 
     checkSession();
