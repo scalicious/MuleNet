@@ -236,29 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return emailRegex.test(email);
   }
 
-  // Check whether an email is already associated with an existing Supabase Auth user
-  async function isEmailRegistered(email) {
-    if (!email) return false;
-    const normalized = email.trim().toLowerCase();
-    try {
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_PUBLISHABLE_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email: normalized, password: 'DummyCheckPassword123!' })
-      });
-      const data = await res.json();
-      if (data && data.id && Array.isArray(data.identities) && data.identities.length === 0) {
-        return true; // Already registered
-      }
-      return false;
-    } catch (err) {
-      return false;
-    }
-  }
-
   // --------------------------------------------------------------------------
   // 1. EMAIL + PASSWORD LOGIN
   // --------------------------------------------------------------------------
@@ -320,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --------------------------------------------------------------------------
-  // 2. STEPPED USER SIGN-UP FLOW (CHECK REGISTERED -> EMAIL -> OTP -> PASSWORD)
+  // 2. STEPPED USER SIGN-UP FLOW (EMAIL -> OTP -> PASSWORD -> /user-home)
   // --------------------------------------------------------------------------
   const signupStep1 = document.getElementById('signupStep1');
   const signupStep2 = document.getElementById('signupStep2');
@@ -403,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // STEP 1: Validate Email, Check Registration & Send OTP
+  // STEP 1: Validate Email & Send OTP directly via Supabase Auth
   if (signupEmailForm) {
     signupEmailForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -424,29 +401,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       isSendingEmailOtp = true;
+      pendingSignupEmail = email;
+      isSigningUp = true;
 
       if (sendOtpBtn) {
         sendOtpBtn.disabled = true;
-        sendOtpBtn.textContent = 'Checking email...';
+        sendOtpBtn.textContent = 'Sending OTP...';
       }
 
       try {
-        const registered = await isEmailRegistered(email);
-
-        if (registered) {
-          showMsg(signupEmailMsg, 'This email is already registered. Please sign in.', 'error');
-          if (sendOtpBtn) {
-            sendOtpBtn.disabled = false;
-            sendOtpBtn.textContent = 'Send Verification Code';
-          }
-          isSendingEmailOtp = false;
-          return;
-        }
-
-        pendingSignupEmail = email;
-        isSigningUp = true;
-        sendOtpBtn.textContent = 'Sending OTP...';
-
         const { error } = await supabaseClient.auth.signInWithOtp({
           email: pendingSignupEmail,
           options: {
@@ -709,7 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
   }
 
-  // Forgot Step 1: Submit Email
+  // Forgot Step 1: Submit Email & Request Reset OTP directly via Supabase Auth
   if (forgotEmailForm) {
     forgotEmailForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -730,35 +693,22 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       isSendingForgotOtp = true;
+      pendingForgotEmail = email;
+      isSigningUp = true; // Prevent auto-redirect during forgot password steps
+
       if (sendForgotOtpBtn) {
         sendForgotOtpBtn.disabled = true;
-        sendForgotOtpBtn.textContent = 'Checking account...';
+        sendForgotOtpBtn.textContent = 'Sending OTP...';
       }
 
       try {
-        const registered = await isEmailRegistered(email);
-
-        if (!registered) {
-          showMsg(forgotEmailMsg, 'No account found with this email. Please check your email or create an account.', 'error');
-          if (sendForgotOtpBtn) {
-            sendForgotOtpBtn.disabled = false;
-            sendForgotOtpBtn.textContent = 'Send Verification Code';
-          }
-          isSendingForgotOtp = false;
-          return;
-        }
-
-        pendingForgotEmail = email;
-        isSigningUp = true; // Prevent auto-redirect during forgot password steps
-        sendForgotOtpBtn.textContent = 'Sending OTP...';
-
         const { error } = await supabaseClient.auth.signInWithOtp({
           email: pendingForgotEmail,
           options: { shouldCreateUser: false }
         });
 
         if (error) {
-          showMsg(forgotEmailMsg, 'Failed to send verification code. Please try again.', 'error');
+          showMsg(forgotEmailMsg, 'No account found with this email. Please check your email or create an account.', 'error');
           if (sendForgotOtpBtn) {
             sendForgotOtpBtn.disabled = false;
             sendForgotOtpBtn.textContent = 'Send Verification Code';
