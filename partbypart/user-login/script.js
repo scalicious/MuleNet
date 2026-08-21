@@ -195,7 +195,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ==========================================================================
-     SUPABASE AUTHENTICATION INTEGRATION (USER LOGIN, SIGNUP & FORGOT PASSWORD)
+     SUPABASE AUTHENTICATION & SENDGRID SMTP EMAIL DELIVERY INTEGRATION
+     Architecture: Frontend JS -> Supabase Auth -> SendGrid Custom SMTP -> User Email
      ========================================================================== */
   const SUPABASE_URL = 'https://jkcgutjknjykqasenwqq.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_PtBOjVSdVe4eKPfBDE8y6g_RUGPzvG6';
