@@ -10,6 +10,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Supabase JS Client SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <!-- Leaflet JavaScript -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <style>
     :root {
       --bg-dark: #141414;
@@ -25,23 +29,25 @@
       margin: 0;
       padding: 0;
       width: 100%;
-      height: 100%;
+      min-height: 100%;
       background-color: var(--bg-dark);
       font-family: var(--font-family);
       color: var(--text-white);
       display: flex;
       align-items: center;
       justify-content: center;
+      box-sizing: border-box;
     }
     .home-card {
       background-color: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
-      padding: 40px 36px;
-      max-width: 440px;
+      padding: 36px 32px;
+      max-width: 480px;
       width: 90%;
       text-align: center;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      margin: 24px 0;
     }
     .badge {
       display: inline-block;
@@ -85,6 +91,88 @@
     .btn-logout:hover {
       opacity: 0.9;
     }
+    .btn-location {
+      width: 100%;
+      height: 48px;
+      background: transparent;
+      color: var(--gold-primary);
+      border: 2px solid var(--gold-primary);
+      border-radius: 9999px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 14px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-location:hover {
+      background-color: rgba(229, 169, 59, 0.12);
+      transform: translateY(-1px);
+    }
+    .btn-location:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .location-box {
+      background-color: #12141a;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-top: 16px;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+    .location-header {
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .location-details {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+    .location-details div {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .location-details strong {
+      color: var(--gold-primary);
+      font-family: monospace, sans-serif;
+      font-size: 0.9rem;
+    }
+    .location-map {
+      width: 100%;
+      height: 240px;
+      border-radius: 14px;
+      margin-top: 14px;
+      border: 1px solid var(--card-border);
+      overflow: hidden;
+      z-index: 1;
+    }
+    .location-error {
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-top: 14px;
+      background-color: rgba(234, 67, 53, 0.12);
+      border: 1px solid rgba(234, 67, 53, 0.35);
+      color: #ff6b6b;
+      text-align: center;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -93,8 +181,23 @@
     <div class="badge">USER PORTAL</div>
     <h1>User Home</h1>
     <p>Logged in as: <span id="userEmail" class="user-email">Loading...</span></p>
+
     <button id="logoutBtn" class="btn-logout">Sign Out</button>
     <div id="homeError" class="home-error" style="display: none; color: #ff6b6b; background-color: rgba(234, 67, 53, 0.12); border: 1px solid rgba(234, 67, 53, 0.35); padding: 10px 14px; border-radius: 12px; margin-top: 14px; font-size: 0.85rem;"></div>
+
+    <button id="getLocationBtn" class="btn-location">📍 Get Current Location</button>
+
+    <div id="locationInfoBox" class="location-box" style="display: none;">
+      <div class="location-header">📍 Your Current Location</div>
+      <div class="location-details">
+        <div><span>Latitude:</span> <strong id="latValue">--</strong></div>
+        <div><span>Longitude:</span> <strong id="lngValue">--</strong></div>
+        <div><span>Accuracy:</span> <strong id="accValue">--</strong></div>
+      </div>
+    </div>
+
+    <div id="map" class="location-map" style="display: none;"></div>
+    <div id="locationError" class="location-error" style="display: none;"></div>
   </div>
 
   <script>
@@ -167,6 +270,108 @@
       }
       window.location.href = LOGIN_PAGE_URL;
     });
+
+    // --------------------------------------------------------------------------
+    // LEAFLET & OPENSTREETMAP BROWSER GEOLOCATION FEATURE
+    // --------------------------------------------------------------------------
+    let leafletMap = null;
+    let leafletMarker = null;
+
+    const getLocationBtn = document.getElementById('getLocationBtn');
+    const locationInfoBox = document.getElementById('locationInfoBox');
+    const locationError = document.getElementById('locationError');
+    const mapContainer = document.getElementById('map');
+    const latValue = document.getElementById('latValue');
+    const lngValue = document.getElementById('lngValue');
+    const accValue = document.getElementById('accValue');
+
+    if (getLocationBtn) {
+      getLocationBtn.addEventListener('click', () => {
+        if (locationError) locationError.style.display = 'none';
+
+        if (!navigator.geolocation) {
+          showLocationError('Browser does not support geolocation.');
+          return;
+        }
+
+        getLocationBtn.disabled = true;
+        getLocationBtn.textContent = '⏳ Retrieving Location...';
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const acc = position.coords.accuracy;
+
+            latValue.textContent = lat.toFixed(6);
+            lngValue.textContent = lng.toFixed(6);
+            accValue.textContent = `±${Math.round(acc)} meters`;
+            locationInfoBox.style.display = 'block';
+
+            mapContainer.style.display = 'block';
+
+            if (!leafletMap && window.L) {
+              leafletMap = L.map('map').setView([lat, lng], 15);
+
+              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
+              }).addTo(leafletMap);
+
+              leafletMarker = L.marker([lat, lng]).addTo(leafletMap)
+                .bindPopup('<b>You are here</b>')
+                .openPopup();
+            } else if (leafletMap) {
+              leafletMap.setView([lat, lng], 15);
+              if (leafletMarker) {
+                leafletMarker.setLatLng([lat, lng])
+                  .bindPopup('<b>You are here</b>')
+                  .openPopup();
+              }
+            }
+
+            setTimeout(() => {
+              if (leafletMap) leafletMap.invalidateSize();
+            }, 200);
+
+            getLocationBtn.disabled = false;
+            getLocationBtn.textContent = '📍 Update Location';
+          },
+          (error) => {
+            getLocationBtn.disabled = false;
+            getLocationBtn.textContent = '📍 Get Current Location';
+
+            let errMsg = 'Failed to retrieve location.';
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errMsg = 'Location permission denied. Please allow location access in your browser.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errMsg = 'Location position is currently unavailable.';
+                break;
+              case error.TIMEOUT:
+                errMsg = 'Location request timed out. Please try again.';
+                break;
+              default:
+                errMsg = error.message || 'An unknown location error occurred.';
+                break;
+            }
+            showLocationError(errMsg);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+          }
+        );
+      });
+    }
+
+    function showLocationError(msg) {
+      if (locationError) {
+        locationError.textContent = msg;
+        locationError.style.display = 'block';
+      }
+    }
 
     checkSession();
   </script>
