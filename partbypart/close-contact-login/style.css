@@ -72,6 +72,33 @@ html, body {
   overflow: hidden;
 }
 
+/* Top-Left Navigation Back Button */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(10px);
+  margin-bottom: 16px;
+  align-self: flex-start;
+  z-index: 10;
+}
+
+.back-btn:hover {
+  color: var(--gold-primary);
+  background: rgba(229, 169, 59, 0.1);
+  border-color: rgba(229, 169, 59, 0.3);
+  transform: translateX(-3px);
+}
+
 /* Top-Left Glass Card */
 .left-info-top {
   max-width: 400px;
