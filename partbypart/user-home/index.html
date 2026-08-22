@@ -29,150 +29,41 @@
       margin: 0;
       padding: 0;
       width: 100%;
-      min-height: 100%;
+      min-height: 100vh;
       background-color: var(--bg-dark);
       font-family: var(--font-family);
       color: var(--text-white);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       box-sizing: border-box;
     }
-    .home-card {
+    
+    .page-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px 20px 40px 20px;
+    }
+
+    /* Header Bar */
+    .home-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding: 16px 20px;
       background-color: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 36px 32px;
-      max-width: 480px;
-      width: 90%;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      margin: 24px 0;
+      border-radius: 16px;
+      flex-wrap: wrap;
     }
-    .badge {
-      display: inline-block;
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      color: var(--gold-primary);
-      background-color: rgba(229, 169, 59, 0.1);
-      border: 1px solid rgba(229, 169, 59, 0.25);
-      padding: 4px 12px;
-      border-radius: 20px;
-      margin-bottom: 16px;
-      text-transform: uppercase;
-    }
-    h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      margin: 0 0 10px 0;
-    }
-    p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      margin-bottom: 24px;
-    }
-    .user-email {
-      color: var(--gold-primary);
-      font-weight: 600;
-    }
-    .btn-logout {
-      width: 100%;
-      height: 48px;
-      background: var(--gold-gradient);
-      color: #08090a;
-      border: none;
-      border-radius: 9999px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity 0.2s ease;
-    }
-    .btn-logout:hover {
-      opacity: 0.9;
-    }
-    .btn-location {
-      width: 100%;
-      height: 48px;
-      background: transparent;
-      color: var(--gold-primary);
-      border: 2px solid var(--gold-primary);
-      border-radius: 9999px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      margin-top: 14px;
-      transition: all 0.2s ease;
+
+    .header-left {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
+      gap: 16px;
+      flex-wrap: wrap;
     }
-    .btn-location:hover {
-      background-color: rgba(229, 169, 59, 0.12);
-      transform: translateY(-1px);
-    }
-    .btn-location:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-    .location-box {
-      background-color: #12141a;
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 16px 18px;
-      margin-top: 16px;
-      text-align: left;
-      font-size: 0.88rem;
-    }
-    .location-header {
-      font-weight: 700;
-      color: var(--text-white);
-      margin-bottom: 10px;
-      font-size: 0.95rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .location-details {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      color: var(--text-muted);
-    }
-    .location-details div {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .location-details strong {
-      color: var(--gold-primary);
-      font-family: monospace, sans-serif;
-      font-size: 0.9rem;
-    }
-    .location-map {
-      width: 100%;
-      height: 240px;
-      border-radius: 14px;
-      margin-top: 14px;
-      border: 1px solid var(--card-border);
-      overflow: hidden;
-      z-index: 1;
-    }
-    .location-error {
-      font-size: 0.85rem;
-      font-weight: 500;
-      padding: 10px 14px;
-      border-radius: 12px;
-      margin-top: 14px;
-      background-color: rgba(234, 67, 53, 0.12);
-      border: 1px solid rgba(234, 67, 53, 0.35);
-      color: #ff6b6b;
-      text-align: center;
-      line-height: 1.4;
-    /* Top-Left Navigation Back Button */
+
+    /* Navigation Back Button */
     a.back-btn,
     a.back-btn:link,
     a.back-btn:visited {
@@ -192,8 +83,6 @@
       transition: all 0.25s ease;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      margin-bottom: 16px;
-      align-self: flex-start;
       z-index: 10;
       box-sizing: border-box;
     }
@@ -206,38 +95,628 @@
       transform: translateX(-3px);
       text-decoration: none !important;
     }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--gold-primary);
+      background-color: rgba(229, 169, 59, 0.1);
+      border: 1px solid rgba(229, 169, 59, 0.25);
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    .user-info {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .user-email {
+      color: var(--gold-primary);
+      font-weight: 600;
+    }
+
+    .btn-logout-sm {
+      padding: 8px 20px;
+      background: var(--gold-gradient);
+      color: #08090a;
+      border: none;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+    }
+    .btn-logout-sm:hover {
+      opacity: 0.9;
+    }
+
+    .home-error {
+      font-size: 0.85rem;
+      color: #ff6b6b;
+      background-color: rgba(234, 67, 53, 0.12);
+      border: 1px solid rgba(234, 67, 53, 0.35);
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+
+    /* Top Navigation Tabs */
+    .portal-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .nav-tab {
+      padding: 10px 22px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 9999px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: inherit;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-sizing: border-box;
+      outline: none;
+    }
+
+    .nav-tab:hover {
+      color: var(--text-white);
+      border-color: rgba(229, 169, 59, 0.3);
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    .nav-tab.active {
+      color: #08090a;
+      background: var(--gold-gradient);
+      border-color: transparent;
+      box-shadow: 0 4px 15px rgba(229, 169, 59, 0.25);
+    }
+
+    /* Section Card Views */
+    .user-section {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .section-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: var(--gold-primary);
+      background-color: rgba(229, 169, 59, 0.1);
+      border: 1px solid rgba(229, 169, 59, 0.25);
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 16px 0;
+      color: var(--text-white);
+    }
+
+    /* PAGE 1: MY Location */
+    .btn-location {
+      width: 100%;
+      height: 48px;
+      background: transparent;
+      color: var(--gold-primary);
+      border: 2px solid var(--gold-primary);
+      border-radius: 9999px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-sizing: border-box;
+    }
+    .btn-location:hover {
+      background-color: rgba(229, 169, 59, 0.12);
+      transform: translateY(-1px);
+    }
+    .btn-location:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .location-box {
+      background-color: #12141a;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 18px;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+    .location-header {
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+    .location-details {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+    .location-details div {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .location-details strong {
+      color: var(--gold-primary);
+      font-family: monospace, sans-serif;
+      font-size: 0.92rem;
+    }
+
+    .location-map {
+      width: 100%;
+      height: 280px;
+      border-radius: 14px;
+      margin-top: 18px;
+      border: 1px solid var(--card-border);
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .location-error {
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-top: 16px;
+      background-color: rgba(234, 67, 53, 0.12);
+      border: 1px solid rgba(234, 67, 53, 0.35);
+      color: #ff6b6b;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* PAGE 2: MY CLOSE ONES */
+    .close-ones-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .btn-add-close-one {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      background: var(--gold-gradient);
+      color: #08090a;
+      border: none;
+      border-radius: 9999px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .btn-add-close-one:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .add-close-one-card {
+      background-color: #12141a;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .form-group-close {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .form-label-close {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-white);
+    }
+
+    .form-input-close,
+    .form-select-close {
+      width: 100%;
+      height: 44px;
+      background-color: #191b22;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 0 16px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: var(--text-white);
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-input-close:focus,
+    .form-select-close:focus {
+      border-color: var(--gold-primary);
+    }
+
+    .form-select-close option {
+      background-color: #191b22;
+      color: var(--text-white);
+    }
+
+    .form-actions-close {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .btn-submit-close {
+      flex: 1;
+      height: 44px;
+      background: var(--gold-gradient);
+      color: #08090a;
+      border: none;
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+    }
+    .btn-submit-close:hover {
+      opacity: 0.9;
+    }
+    .btn-submit-close:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-cancel-close {
+      padding: 10px 18px;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--card-border);
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-cancel-close:hover {
+      color: var(--text-white);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-link-close {
+      background: none;
+      border: none;
+      color: var(--gold-primary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+      margin-top: 10px;
+    }
+    .btn-link-close:hover {
+      color: #ffd359;
+    }
+
+    .close-one-msg {
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      line-height: 1.4;
+      text-align: left;
+    }
+    .close-one-msg.error {
+      background-color: rgba(234, 67, 53, 0.12);
+      border: 1px solid rgba(234, 67, 53, 0.35);
+      color: #ff6b6b;
+    }
+    .close-one-msg.success {
+      background-color: rgba(229, 169, 59, 0.12);
+      border: 1px solid rgba(229, 169, 59, 0.35);
+      color: var(--gold-primary);
+    }
+
+    .empty-close-ones {
+      padding: 36px 20px;
+      text-align: center;
+      background-color: #12141a;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+    }
+
+    /* Contacts List & Cards */
+    .contacts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .contact-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #12141a;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      transition: border-color 0.25s ease;
+    }
+
+    .contact-card:hover {
+      border-color: rgba(229, 169, 59, 0.3);
+    }
+
+    .contact-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .contact-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(229, 169, 59, 0.12);
+      border: 1px solid rgba(229, 169, 59, 0.25);
+      color: var(--gold-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .contact-email-text {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-white);
+    }
+
+    .contact-relation-badge {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--gold-primary);
+      background: rgba(229, 169, 59, 0.1);
+      border: 1px solid rgba(229, 169, 59, 0.2);
+      padding: 2px 8px;
+      border-radius: 9999px;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    .contact-status {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #34a853;
+      background: rgba(52, 168, 83, 0.12);
+      border: 1px solid rgba(52, 168, 83, 0.25);
+      padding: 4px 10px;
+      border-radius: 9999px;
+    }
+
+    /* PAGE 3: SEE YOUR CLOSE ONES Placeholder */
+    .placeholder-card {
+      background-color: #12141a;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 40px 24px;
+      text-align: center;
+    }
+
+    .placeholder-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+
+    .placeholder-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--gold-primary);
+      margin: 0 0 10px 0;
+    }
+
+    .placeholder-text {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      max-width: 460px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
 
-  <div class="home-card">
-    <a href="../index.html" class="back-btn" aria-label="Back to main page">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>Back</span>
-    </a>
+  <div class="page-wrapper">
+    <!-- Top Bar with Back Button, User Info & Logout -->
+    <header class="home-header">
+      <div class="header-left">
+        <a href="../index.html" class="back-btn" aria-label="Back to main page">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Back</span>
+        </a>
 
-    <div class="badge">USER PORTAL</div>
-    <h1>User Home</h1>
-    <p>Logged in as: <span id="userEmail" class="user-email">Loading...</span></p>
-
-    <button id="logoutBtn" class="btn-logout">Sign Out</button>
-    <div id="homeError" class="home-error" style="display: none; color: #ff6b6b; background-color: rgba(234, 67, 53, 0.12); border: 1px solid rgba(234, 67, 53, 0.35); padding: 10px 14px; border-radius: 12px; margin-top: 14px; font-size: 0.85rem;"></div>
-
-    <button id="getLocationBtn" class="btn-location">📍 Get Current Location</button>
-
-    <div id="locationInfoBox" class="location-box" style="display: none;">
-      <div class="location-header">📍 Your Current Location</div>
-      <div class="location-details">
-        <div><span>Latitude:</span> <strong id="latValue">--</strong></div>
-        <div><span>Longitude:</span> <strong id="lngValue">--</strong></div>
-        <div><span>Accuracy:</span> <strong id="accValue">--</strong></div>
+        <span class="badge">USER PORTAL</span>
+        <span class="user-info">Logged in as: <span id="userEmail" class="user-email">Loading...</span></span>
       </div>
-    </div>
 
-    <div id="map" class="location-map" style="display: none;"></div>
-    <div id="locationError" class="location-error" style="display: none;"></div>
+      <button id="logoutBtn" class="btn-logout-sm">Sign Out</button>
+    </header>
+
+    <div id="homeError" class="home-error" style="display: none;"></div>
+
+    <!-- TOP NAVIGATION BUTTONS -->
+    <nav class="portal-nav" aria-label="User Portal Page Switcher">
+      <button class="nav-tab active" data-target="myView">MY</button>
+      <button class="nav-tab" data-target="myCloseOnesView">MY CLOSE ONES</button>
+      <button class="nav-tab" data-target="seeYourCloseOnesView">SEE YOUR CLOSE ONES</button>
+    </nav>
+
+    <!-- PORTAL VIEWS / PAGES -->
+    <main class="views-container">
+      
+      <!-- PAGE 1 — MY -->
+      <div id="myView" class="portal-view active">
+        <section class="user-section my-section">
+          <div class="section-badge">MY</div>
+          <h2 class="section-title">My Location</h2>
+
+          <button id="getLocationBtn" class="btn-location">📍 Get My Location</button>
+
+          <div id="locationInfoBox" class="location-box" style="display: none;">
+            <div class="location-header">📍 Current Location</div>
+            <div class="location-details">
+              <div><span>Latitude:</span> <strong id="latValue">--</strong></div>
+              <div><span>Longitude:</span> <strong id="lngValue">--</strong></div>
+              <div><span>Accuracy:</span> <strong id="accValue">--</strong></div>
+            </div>
+          </div>
+
+          <div id="map" class="location-map" style="display: none;"></div>
+          <div id="locationError" class="location-error" style="display: none;"></div>
+        </section>
+      </div>
+
+      <!-- PAGE 2 — MY CLOSE ONES -->
+      <div id="myCloseOnesView" class="portal-view" style="display: none;">
+        <section class="user-section close-ones-section">
+          <div class="section-badge">MY CLOSE ONES</div>
+          
+          <div class="close-ones-header-bar">
+            <h2 class="section-title" style="margin: 0;">My Close Ones</h2>
+            <button id="openAddCloseOneBtn" class="btn-add-close-one">+ Add Close One</button>
+          </div>
+
+          <!-- Step 1: Add Close One Form -->
+          <div id="addCloseOneFormCard" class="add-close-one-card" style="display: none;">
+            <h3 style="margin: 0 0 16px 0; font-size: 1.1rem; color: var(--gold-primary);">Add Close One</h3>
+            
+            <div id="closeOneMsg" class="close-one-msg" style="display: none;"></div>
+
+            <div class="form-group-close">
+              <label for="closeOneEmail" class="form-label-close">Email Address</label>
+              <input type="email" id="closeOneEmail" class="form-input-close" placeholder="e.g. father@example.com" />
+            </div>
+
+            <div class="form-group-close">
+              <label for="closeOneRelationship" class="form-label-close">Relationship</label>
+              <select id="closeOneRelationship" class="form-select-close">
+                <option value="">Select Relationship ▼</option>
+                <option value="Father">Father</option>
+                <option value="Mother">Mother</option>
+                <option value="Brother">Brother</option>
+                <option value="Sister">Sister</option>
+                <option value="Friend">Friend</option>
+                <option value="Partner">Partner</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-actions-close">
+              <button id="sendCloseOneOtpBtn" class="btn-submit-close">Send Verification Code</button>
+              <button id="cancelAddCloseOneBtn" class="btn-cancel-close">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Verification Code Form -->
+          <div id="verifyCloseOneFormCard" class="add-close-one-card" style="display: none;">
+            <h3 style="margin: 0 0 10px 0; font-size: 1.1rem; color: var(--gold-primary);">Verification Code</h3>
+            <p style="margin: 0 0 16px 0; font-size: 0.88rem; color: var(--text-muted);">
+              A verification code has been sent to: <strong id="displayTargetCloseOneEmail" style="color: var(--text-white);"></strong>
+            </p>
+
+            <div id="closeOneVerifyMsg" class="close-one-msg" style="display: none;"></div>
+
+            <div class="form-group-close">
+              <label for="closeOneOtpInput" class="form-label-close">Enter the 6-digit code:</label>
+              <input type="text" id="closeOneOtpInput" class="form-input-close" placeholder="123456" maxlength="6" style="letter-spacing: 0.15em; font-weight: 700;" />
+            </div>
+
+            <div class="form-actions-close" style="flex-direction: column; align-items: stretch;">
+              <button id="verifyCloseOneBtn" class="btn-submit-close">Verify & Add</button>
+              <button id="changeCloseOneEmailBtn" class="btn-link-close">Change Email</button>
+            </div>
+          </div>
+
+          <!-- Contacts List Container -->
+          <div id="closeOnesListContainer" class="contacts-list" style="display: none;"></div>
+
+          <!-- Empty State -->
+          <div id="emptyCloseOnesState" class="empty-close-ones">
+            No close ones added yet.
+          </div>
+        </section>
+      </div>
+
+      <!-- PAGE 3 — SEE YOUR CLOSE ONES -->
+      <div id="seeYourCloseOnesView" class="portal-view" style="display: none;">
+        <section class="user-section see-close-ones-section">
+          <div class="section-badge">SEE YOUR CLOSE ONES</div>
+          <h2 class="section-title">See Your Close Ones</h2>
+          <p style="margin: 4px 0 20px 0; font-size: 0.88rem; color: var(--text-muted);">
+            People who have added you as their trusted close contact:
+          </p>
+
+          <!-- Reverse Connections List Container -->
+          <div id="seeYourCloseOnesListContainer" class="contacts-list" style="display: none;"></div>
+
+          <!-- Empty State -->
+          <div id="emptySeeYourCloseOnesState" class="empty-close-ones">
+            No one has added you as a close one yet.
+          </div>
+        </section>
+      </div>
+
+    </main>
   </div>
 
   <script>
@@ -312,6 +791,504 @@
     });
 
     // --------------------------------------------------------------------------
+    // USER PORTAL THREE-PAGE/VIEW NAVIGATION SWITCHER
+    // --------------------------------------------------------------------------
+    const navTabs = document.querySelectorAll('.nav-tab');
+    const portalViews = document.querySelectorAll('.portal-view');
+
+    navTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetId = tab.getAttribute('data-target');
+
+        // Update active tab button style
+        navTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Switch active view
+        portalViews.forEach(view => {
+          if (view.id === targetId) {
+            view.style.display = 'block';
+          } else {
+            view.style.display = 'none';
+          }
+        });
+
+        // If switching to "MY CLOSE ONES" view, load verified close contacts
+        if (targetId === 'myCloseOnesView') {
+          loadCloseOnesList();
+        }
+
+        // If switching to "SEE YOUR CLOSE ONES" view, load people who added this user
+        if (targetId === 'seeYourCloseOnesView') {
+          loadSeeYourCloseOnesList();
+        }
+
+        // If switching back to "MY" view, refresh Leaflet map bounds
+        if (targetId === 'myView' && leafletMap && mapContainer.style.display !== 'none') {
+          setTimeout(() => {
+            leafletMap.invalidateSize();
+          }, 100);
+        }
+      });
+    });
+
+    // --------------------------------------------------------------------------
+    // MY CLOSE ONES: ADD CLOSE ONE & EDGE FUNCTION CALL
+    // --------------------------------------------------------------------------
+    const openAddCloseOneBtn = document.getElementById('openAddCloseOneBtn');
+    const addCloseOneFormCard = document.getElementById('addCloseOneFormCard');
+    const verifyCloseOneFormCard = document.getElementById('verifyCloseOneFormCard');
+    const emptyCloseOnesState = document.getElementById('emptyCloseOnesState');
+    const closeOnesListContainer = document.getElementById('closeOnesListContainer');
+
+    const seeYourCloseOnesListContainer = document.getElementById('seeYourCloseOnesListContainer');
+    const emptySeeYourCloseOnesState = document.getElementById('emptySeeYourCloseOnesState');
+
+    const closeOneEmailInput = document.getElementById('closeOneEmail');
+    const closeOneRelationshipSelect = document.getElementById('closeOneRelationship');
+    const sendCloseOneOtpBtn = document.getElementById('sendCloseOneOtpBtn');
+    const cancelAddCloseOneBtn = document.getElementById('cancelAddCloseOneBtn');
+    const closeOneMsg = document.getElementById('closeOneMsg');
+
+    const displayTargetCloseOneEmail = document.getElementById('displayTargetCloseOneEmail');
+    const closeOneOtpInput = document.getElementById('closeOneOtpInput');
+    const verifyCloseOneBtn = document.getElementById('verifyCloseOneBtn');
+    const changeCloseOneEmailBtn = document.getElementById('changeCloseOneEmailBtn');
+    const closeOneVerifyMsg = document.getElementById('closeOneVerifyMsg');
+
+    let pendingCloseOneEmail = '';
+    let pendingCloseOneRelationship = '';
+
+    // Load and render people who added the current logged-in user as a close contact
+    async function loadSeeYourCloseOnesList() {
+      if (!supabaseClient) return;
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session || !session.user || !session.user.email) return;
+
+        const currentUserEmail = session.user.email.toLowerCase();
+
+        const { data: connections, error } = await supabaseClient
+          .from('close_connections')
+          .select('*')
+          .eq('contact_email', currentUserEmail)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching reverse close connections:', error);
+          return;
+        }
+
+        if (!connections || connections.length === 0) {
+          if (seeYourCloseOnesListContainer) {
+            seeYourCloseOnesListContainer.innerHTML = '';
+            seeYourCloseOnesListContainer.style.display = 'none';
+          }
+          if (emptySeeYourCloseOnesState) {
+            emptySeeYourCloseOnesState.style.display = 'block';
+          }
+          return;
+        }
+
+        if (emptySeeYourCloseOnesState) emptySeeYourCloseOnesState.style.display = 'none';
+        if (seeYourCloseOnesListContainer) {
+          seeYourCloseOnesListContainer.style.display = 'flex';
+          seeYourCloseOnesListContainer.innerHTML = connections.map(c => `
+            <div class="contact-card">
+              <div class="contact-left">
+                <div class="contact-avatar">👤</div>
+                <div class="contact-info">
+                  <div class="contact-email-text">User ID: ${c.user_id ? c.user_id.slice(0, 8) + '...' : 'Connected User'}</div>
+                  <div class="contact-relation-badge">Listed you as: ${c.relationship || 'Close Contact'}</div>
+                </div>
+              </div>
+              <div class="contact-status" style="color: #4285f4; background: rgba(66, 133, 244, 0.12); border-color: rgba(66, 133, 244, 0.25);">Monitoring Active</div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Failed to load reverse close connections:', err);
+      }
+    }
+
+    // Load and render verified close contacts from database
+    async function loadCloseOnesList() {
+      if (!supabaseClient) return;
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session || !session.user) return;
+
+        const { data: contacts, error } = await supabaseClient
+          .from('close_connections')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching close connections:', error);
+          return;
+        }
+
+        if (!contacts || contacts.length === 0) {
+          if (closeOnesListContainer) {
+            closeOnesListContainer.innerHTML = '';
+            closeOnesListContainer.style.display = 'none';
+          }
+          if (emptyCloseOnesState && addCloseOneFormCard.style.display === 'none' && verifyCloseOneFormCard.style.display === 'none') {
+            emptyCloseOnesState.style.display = 'block';
+          }
+          return;
+        }
+
+        if (emptyCloseOnesState) emptyCloseOnesState.style.display = 'none';
+        if (closeOnesListContainer) {
+          closeOnesListContainer.style.display = 'flex';
+          closeOnesListContainer.innerHTML = contacts.map(c => `
+            <div class="contact-card">
+              <div class="contact-left">
+                <div class="contact-avatar">${(c.relationship || 'C').charAt(0).toUpperCase()}</div>
+                <div class="contact-info">
+                  <div class="contact-email-text">${c.contact_email}</div>
+                  <div class="contact-relation-badge">${c.relationship || 'Close Contact'}</div>
+                </div>
+              </div>
+              <div class="contact-status">Active</div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Failed to load close connections:', err);
+      }
+    }
+
+    // Initial load of close connections
+    loadCloseOnesList();
+
+    function showCloseMsg(container, text, type = 'error') {
+      if (!container) return;
+      container.textContent = text;
+      container.className = `close-one-msg ${type}`;
+      container.style.display = 'block';
+    }
+
+    function clearCloseMsg(container) {
+      if (!container) return;
+      container.textContent = '';
+      container.style.display = 'none';
+    }
+
+    function isValidEmail(email) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      return emailRegex.test(email);
+    }
+
+    // Open Add Form
+    if (openAddCloseOneBtn) {
+      openAddCloseOneBtn.addEventListener('click', () => {
+        if (addCloseOneFormCard) addCloseOneFormCard.style.display = 'block';
+        if (verifyCloseOneFormCard) verifyCloseOneFormCard.style.display = 'none';
+        if (emptyCloseOnesState) emptyCloseOnesState.style.display = 'none';
+        if (closeOneEmailInput) closeOneEmailInput.focus();
+        clearCloseMsg(closeOneMsg);
+        clearCloseMsg(closeOneVerifyMsg);
+      });
+    }
+
+    // Cancel Form
+    if (cancelAddCloseOneBtn) {
+      cancelAddCloseOneBtn.addEventListener('click', () => {
+        if (addCloseOneFormCard) addCloseOneFormCard.style.display = 'none';
+        if (verifyCloseOneFormCard) verifyCloseOneFormCard.style.display = 'none';
+        loadCloseOnesList();
+        if (closeOneEmailInput) closeOneEmailInput.value = '';
+        if (closeOneRelationshipSelect) closeOneRelationshipSelect.value = '';
+        clearCloseMsg(closeOneMsg);
+        clearCloseMsg(closeOneVerifyMsg);
+      });
+    }
+
+    // Change Email (Return from Step 2 to Step 1)
+    if (changeCloseOneEmailBtn) {
+      changeCloseOneEmailBtn.addEventListener('click', () => {
+        if (verifyCloseOneFormCard) verifyCloseOneFormCard.style.display = 'none';
+        if (addCloseOneFormCard) addCloseOneFormCard.style.display = 'block';
+        if (closeOneOtpInput) closeOneOtpInput.value = '';
+        clearCloseMsg(closeOneMsg);
+        clearCloseMsg(closeOneVerifyMsg);
+      });
+    }
+
+    // Submit Step 1: Send OTP via Edge Function send-connection-otp
+    if (sendCloseOneOtpBtn) {
+      sendCloseOneOtpBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        clearCloseMsg(closeOneMsg);
+
+        const email = closeOneEmailInput ? closeOneEmailInput.value.trim().toLowerCase() : '';
+        const relationship = closeOneRelationshipSelect ? closeOneRelationshipSelect.value : '';
+
+        // Validations
+        if (!email) {
+          showCloseMsg(closeOneMsg, 'Please enter an email address.', 'error');
+          return;
+        }
+
+        if (!isValidEmail(email)) {
+          showCloseMsg(closeOneMsg, 'Please enter a valid email address.', 'error');
+          return;
+        }
+
+        // Prevent Self-Addition
+        const { data: { session: curSession } } = await supabaseClient.auth.getSession();
+        const currentUserEmail = curSession && curSession.user && curSession.user.email ? curSession.user.email.toLowerCase() : '';
+
+        if (email === currentUserEmail) {
+          showCloseMsg(closeOneMsg, 'You cannot add yourself as a close one.', 'error');
+          return;
+        }
+
+        if (!relationship) {
+          showCloseMsg(closeOneMsg, 'Please select a relationship.', 'error');
+          return;
+        }
+
+        if (!supabaseClient) {
+          showCloseMsg(closeOneMsg, 'Something went wrong. Please try again.', 'error');
+          return;
+        }
+
+        // Set Loading State
+        sendCloseOneOtpBtn.disabled = true;
+        sendCloseOneOtpBtn.textContent = 'Sending...';
+
+        try {
+          // Retrieve current user session access token
+          const accessToken = curSession ? curSession.access_token : '';
+
+          let responseData = null;
+          let responseError = null;
+
+          // 1. Invoke Supabase Edge Function via JS Client SDK
+          const { data, error } = await supabaseClient.functions.invoke('send-connection-otp', {
+            body: {
+              email: email,
+              relationship: relationship
+            },
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
+          });
+
+          responseData = data;
+          responseError = error;
+
+          // 2. Direct fetch fallback in case of Gateway preflight proxy errors
+          if (responseError && (!responseData || !responseData.success)) {
+            try {
+              const directRes = await fetch(`${SUPABASE_URL}/functions/v1/send-connection-otp`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': SUPABASE_PUBLISHABLE_KEY,
+                  'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({
+                  email: email,
+                  relationship: relationship
+                })
+              });
+
+              const directJson = await directRes.json().catch(() => null);
+              if (directRes.ok && directJson && directJson.success) {
+                responseData = directJson;
+                responseError = null;
+              } else if (directJson && directJson.error) {
+                responseError = { message: directJson.error };
+              }
+            } catch (directErr) {
+              console.error('Direct fetch fallback error:', directErr);
+            }
+          }
+
+          if (responseError) {
+            const errStr = (responseError.message || JSON.stringify(responseError)).toLowerCase();
+            let userErrMsg = 'Unable to send the verification code. Please try again.';
+            
+            if (errStr.includes('yourself') || errStr.includes('self')) {
+              userErrMsg = 'You cannot add yourself as a close one.';
+            } else if (errStr.includes('already') || errStr.includes('exists')) {
+              userErrMsg = 'This person is already added.';
+            } else if (errStr.includes('auth') || errStr.includes('unauthorized') || errStr.includes('session')) {
+              userErrMsg = 'Please log in again.';
+            } else if (errStr.includes('invalid email')) {
+              userErrMsg = 'Please enter a valid email address.';
+            }
+
+            showCloseMsg(closeOneMsg, userErrMsg, 'error');
+            sendCloseOneOtpBtn.disabled = false;
+            sendCloseOneOtpBtn.textContent = 'Send Verification Code';
+          } else {
+            // Success: Move to Step 2 Verification UI
+            pendingCloseOneEmail = email;
+            pendingCloseOneRelationship = relationship;
+
+            if (displayTargetCloseOneEmail) displayTargetCloseOneEmail.textContent = pendingCloseOneEmail;
+            if (addCloseOneFormCard) addCloseOneFormCard.style.display = 'none';
+            if (verifyCloseOneFormCard) verifyCloseOneFormCard.style.display = 'block';
+            if (closeOneOtpInput) closeOneOtpInput.value = '';
+            clearCloseMsg(closeOneVerifyMsg);
+
+            sendCloseOneOtpBtn.disabled = false;
+            sendCloseOneOtpBtn.textContent = 'Send Verification Code';
+          }
+        } catch (err) {
+          showCloseMsg(closeOneMsg, 'Unable to send the verification code. Please try again.', 'error');
+          sendCloseOneOtpBtn.disabled = false;
+          sendCloseOneOtpBtn.textContent = 'Send Verification Code';
+        }
+      });
+    }
+
+    // Submit Step 2: Verify OTP via Edge Function verify-connection-otp
+    if (verifyCloseOneBtn) {
+      verifyCloseOneBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        clearCloseMsg(closeOneVerifyMsg);
+
+        const code = closeOneOtpInput ? closeOneOtpInput.value.trim() : '';
+
+        if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+          showCloseMsg(closeOneVerifyMsg, 'Please enter the 6-digit verification code.', 'error');
+          return;
+        }
+
+        if (!pendingCloseOneEmail) {
+          showCloseMsg(closeOneVerifyMsg, 'Session expired. Please request a new verification code.', 'error');
+          return;
+        }
+
+        if (!supabaseClient) {
+          showCloseMsg(closeOneVerifyMsg, 'Unable to verify the code. Please try again.', 'error');
+          return;
+        }
+
+        // Set Loading State
+        verifyCloseOneBtn.disabled = true;
+        verifyCloseOneBtn.textContent = 'Verifying...';
+
+        try {
+          // Retrieve current user session access token
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          const accessToken = session ? session.access_token : '';
+
+          let responseData = null;
+          let responseError = null;
+
+          // 1. Invoke Supabase Edge Function verify-connection-otp
+          const { data, error } = await supabaseClient.functions.invoke('verify-connection-otp', {
+            body: {
+              email: pendingCloseOneEmail,
+              otp: code
+            },
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
+          });
+
+          responseData = data;
+          responseError = error;
+
+          // 2. Direct fetch fallback for proxy/gateway routing
+          if (responseError && (!responseData || !responseData.success)) {
+            try {
+              const directRes = await fetch(`${SUPABASE_URL}/functions/v1/verify-connection-otp`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': SUPABASE_PUBLISHABLE_KEY,
+                  'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({
+                  email: pendingCloseOneEmail,
+                  otp: code
+                })
+              });
+
+              const directJson = await directRes.json().catch(() => null);
+              if (directRes.ok && directJson && directJson.success) {
+                responseData = directJson;
+                responseError = null;
+              } else if (directJson && directJson.error) {
+                responseError = { message: directJson.error };
+              }
+            } catch (directErr) {
+              console.error('Direct fetch fallback error:', directErr);
+            }
+          }
+
+          if (responseError) {
+            const rawMsg = responseError.message || (typeof responseError === 'string' ? responseError : JSON.stringify(responseError));
+            const errStr = rawMsg.toLowerCase();
+            let userErrMsg = rawMsg;
+
+            if (errStr.includes('incorrect') || errStr.includes('invalid verification code')) {
+              userErrMsg = 'Incorrect verification code.';
+            } else if (errStr.includes('expired')) {
+              userErrMsg = 'This verification code has expired. Please request a new code.';
+            } else if (errStr.includes('too many') || errStr.includes('attempts')) {
+              userErrMsg = 'Too many incorrect attempts. Please request a new verification code.';
+            } else if (errStr.includes('already')) {
+              userErrMsg = 'This person is already added.';
+            } else if (errStr.includes('auth') || errStr.includes('unauthorized')) {
+              userErrMsg = 'Please log in again.';
+            }
+
+            showCloseMsg(closeOneVerifyMsg, userErrMsg, 'error');
+            verifyCloseOneBtn.disabled = false;
+            verifyCloseOneBtn.textContent = 'Verify & Add';
+          } else {
+            // Success: Close One added successfully
+            showCloseMsg(closeOneVerifyMsg, 'Close One added successfully.', 'success');
+
+            setTimeout(() => {
+              // Hide verification form and reset state
+              if (verifyCloseOneFormCard) verifyCloseOneFormCard.style.display = 'none';
+              if (closeOneOtpInput) closeOneOtpInput.value = '';
+              if (closeOneEmailInput) closeOneEmailInput.value = '';
+              if (closeOneRelationshipSelect) closeOneRelationshipSelect.value = '';
+
+              pendingCloseOneEmail = '';
+              pendingCloseOneRelationship = '';
+              clearCloseMsg(closeOneVerifyMsg);
+
+              // Reload verified close ones list from database
+              loadCloseOnesList();
+
+              verifyCloseOneBtn.disabled = false;
+              verifyCloseOneBtn.textContent = 'Verify & Add';
+            }, 1200);
+          }
+        } catch (err) {
+          showCloseMsg(closeOneVerifyMsg, 'Unable to verify the code. Please try again.', 'error');
+          verifyCloseOneBtn.disabled = false;
+          verifyCloseOneBtn.textContent = 'Verify & Add';
+        }
+      });
+    }
+
+    function createContactsListContainer() {
+      const section = document.querySelector('#myCloseOnesView .close-ones-section');
+      if (!section) return null;
+      let list = section.querySelector('.contacts-list');
+      if (!list) {
+        list = document.createElement('div');
+        list.className = 'contacts-list';
+        section.appendChild(list);
+      }
+      return list;
+    }
+
+    // --------------------------------------------------------------------------
     // LEAFLET & OPENSTREETMAP BROWSER GEOLOCATION FEATURE
     // --------------------------------------------------------------------------
     let leafletMap = null;
@@ -378,7 +1355,7 @@
           },
           (error) => {
             getLocationBtn.disabled = false;
-            getLocationBtn.textContent = '📍 Get Current Location';
+            getLocationBtn.textContent = '📍 Get My Location';
 
             let errMsg = 'Failed to retrieve location.';
             switch (error.code) {

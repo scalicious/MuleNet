@@ -76,35 +76,60 @@ html, body {
 a.back-btn,
 a.back-btn:link,
 a.back-btn:visited {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 18px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 9999px;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 18px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 9999px !important;
   color: var(--text-muted, #8891a4) !important;
-  font-size: 0.88rem;
-  font-weight: 600;
-  font-family: inherit;
-  line-height: 1.2;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  font-family: inherit !important;
+  line-height: 1.2 !important;
   text-decoration: none !important;
-  transition: all 0.25s ease;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  margin-bottom: 16px;
-  align-self: flex-start;
-  z-index: 10;
-  box-sizing: border-box;
+  transition: all 0.25s ease !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  margin-bottom: 16px !important;
+  align-self: flex-start !important;
+  z-index: 10 !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+a.back-btn span,
+a.back-btn:link span,
+a.back-btn:visited span {
+  display: inline !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+a.back-btn svg {
+  display: inline-block !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 a.back-btn:hover,
 a.back-btn:focus,
 a.back-btn:active {
   color: var(--gold-primary, #e5a93b) !important;
-  background: rgba(229, 169, 59, 0.1);
-  border-color: rgba(229, 169, 59, 0.3);
-  transform: translateX(-3px);
+  background: rgba(229, 169, 59, 0.1) !important;
+  border-color: rgba(229, 169, 59, 0.3) !important;
+  transform: translateX(-3px) !important;
   text-decoration: none !important;
 }
 
