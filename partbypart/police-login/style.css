@@ -74,7 +74,9 @@ html, body {
 }
 
 /* Top-Left Navigation Back Button */
-.back-btn {
+a.back-btn,
+a.back-btn:link,
+a.back-btn:visited {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -82,12 +84,12 @@ html, body {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 9999px;
-  color: var(--text-muted, #8891a4);
+  color: var(--text-muted, #8891a4) !important;
   font-size: 0.88rem;
   font-weight: 600;
   font-family: inherit;
   line-height: 1.2;
-  text-decoration: none;
+  text-decoration: none !important;
   transition: all 0.25s ease;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -97,11 +99,14 @@ html, body {
   box-sizing: border-box;
 }
 
-.back-btn:hover {
-  color: var(--gold-primary, #e5a93b);
+a.back-btn:hover,
+a.back-btn:focus,
+a.back-btn:active {
+  color: var(--gold-primary, #e5a93b) !important;
   background: rgba(229, 169, 59, 0.1);
   border-color: rgba(229, 169, 59, 0.3);
   transform: translateX(-3px);
+  text-decoration: none !important;
 }
 
 /* Top-Left Enhanced Glass Card & Entrance Animation */
