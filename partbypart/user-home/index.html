@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <!-- Leaflet JavaScript -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Leaflet Heatmap Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-heat@0.2.0/dist/leaflet-heat.js"></script>
   <style>
     :root {
       --bg-dark: #141414;
@@ -275,12 +277,136 @@
 
     .location-map {
       width: 100%;
-      height: 280px;
+      height: 420px;
       border-radius: 14px;
       margin-top: 18px;
       border: 1px solid var(--card-border);
       overflow: hidden;
       z-index: 1;
+    }
+
+    /* Leaflet Recenter Control Button */
+    .leaflet-recenter-btn {
+      background-color: #1a1c23 !important;
+      border: 2px solid var(--card-border) !important;
+      color: var(--gold-primary) !important;
+      border-radius: 8px !important;
+      width: 34px !important;
+      height: 34px !important;
+      font-size: 1.15rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+      transition: all 0.2s ease !important;
+      padding: 0 !important;
+    }
+    .leaflet-recenter-btn:hover {
+      background-color: var(--gold-primary) !important;
+      color: #0b0c10 !important;
+      border-color: var(--gold-primary) !important;
+    }
+
+    /* NEARBY PLACES STYLES */
+    .nearby-section {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--card-border);
+      text-align: left;
+    }
+    .nearby-filter-pills {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      margin-bottom: 16px;
+    }
+    .btn-nearby-pill {
+      background: #12141a;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 0.84rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .btn-nearby-pill:hover {
+      border-color: var(--gold-primary);
+      color: var(--text-white);
+    }
+    .btn-nearby-pill.active {
+      background: var(--gold-primary);
+      color: #0b0c10;
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 12px rgba(229, 169, 59, 0.3);
+    }
+    .nearby-msg {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      padding: 12px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .nearby-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .nearby-card {
+      background: #12141a;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .nearby-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--gold-primary);
+    }
+    .nearby-card-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-white);
+      line-height: 1.3;
+    }
+    .nearby-card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .nearby-card-distance {
+      color: var(--gold-primary);
+      font-weight: 600;
+    }
+    .btn-directions {
+      background: rgba(229, 169, 59, 0.12);
+      border: 1px solid rgba(229, 169, 59, 0.3);
+      color: var(--gold-primary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      text-align: center;
+      transition: all 0.2s ease;
+      display: inline-block;
+    }
+    .btn-directions:hover {
+      background: var(--gold-primary);
+      color: #0b0c10;
     }
 
     .location-error {
@@ -508,18 +634,124 @@
       font-weight: 700;
     }
 
-    .contact-info {
+    .location-details {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 8px;
     }
-
-    .contact-email-text {
-      font-size: 0.95rem;
-      font-weight: 600;
+    .location-details div span {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+    .location-details div strong {
       color: var(--text-white);
+      font-size: 0.92rem;
     }
 
+    .location-link-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+      padding-top: 10px;
+      border-top: 1px solid var(--card-border);
+    }
+    .location-link-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .location-link-text {
+      color: var(--gold-primary);
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: underline;
+      transition: color 0.2s ease;
+    }
+    .location-link-text:hover {
+      color: #ffd359;
+    }
+    .btn-copy-link {
+      background: rgba(229, 169, 59, 0.12);
+      border: 1px solid rgba(229, 169, 59, 0.3);
+      color: var(--gold-primary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .btn-copy-link:hover {
+      background: rgba(229, 169, 59, 0.22);
+    }
+
+    .accuracy-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      margin-left: 8px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .accuracy-badge.high {
+      color: #34a853;
+      background: rgba(52, 168, 83, 0.12);
+      border: 1px solid rgba(52, 168, 83, 0.25);
+    }
+    .accuracy-badge.moderate {
+      color: var(--gold-primary);
+      background: rgba(229, 169, 59, 0.12);
+      border: 1px solid rgba(229, 169, 59, 0.25);
+    }
+    .accuracy-badge.approximate {
+      color: #ff9800;
+      background: rgba(255, 152, 0, 0.12);
+      border: 1px solid rgba(255, 152, 0, 0.25);
+    }
+
+    .location-tip {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed var(--card-border);
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+
+    /* Leaflet Layer Switcher Dark Theme */
+    .leaflet-control-layers {
+      background-color: #1a1c23 !important;
+      border: 1px solid var(--card-border) !important;
+      color: var(--text-white) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+      padding: 6px 10px !important;
+      font-family: inherit !important;
+    }
+    .leaflet-control-layers-expanded {
+      padding: 10px 14px !important;
+    }
+    .leaflet-control-layers label {
+      font-size: 0.85rem !important;
+      color: var(--text-white) !important;
+      cursor: pointer !important;
+      margin-bottom: 4px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+    }
+    .leaflet-control-layers-selector {
+      margin-top: 0 !important;
+      accent-color: var(--gold-primary) !important;
+    }
+    
     .contact-relation-badge {
       font-size: 0.76rem;
       font-weight: 600;
@@ -617,11 +849,51 @@
             <div class="location-details">
               <div><span>Latitude:</span> <strong id="latValue">--</strong></div>
               <div><span>Longitude:</span> <strong id="lngValue">--</strong></div>
-              <div><span>Accuracy:</span> <strong id="accValue">--</strong></div>
+              <div>
+                <span>Accuracy:</span> <strong id="accValue">--</strong>
+                <span id="accuracyBadge" class="accuracy-badge"></span>
+              </div>
+              <div>
+                <span>Area Activity:</span> <strong id="crowdDensityValue">Analyzing...</strong>
+                <span id="crowdDensityBadge" class="accuracy-badge"></span>
+              </div>
+              <div class="location-link-row">
+                <span>Location Link:</span>
+                <div class="location-link-actions">
+                  <a id="locationMapUrl" href="#" target="_blank" rel="noopener noreferrer" class="location-link-text">Open in Google Maps ↗</a>
+                  <button id="copyLocationLinkBtn" class="btn-copy-link">📋 Copy Link</button>
+                </div>
+              </div>
+              <div class="location-tip">
+                💡 <strong>Tip:</strong> Desktop/laptop browsers estimate location via Wi-Fi & IP address (~50m–100m+). Opening this portal on a mobile device with GPS enabled provides pinpoint sub-10 meter accuracy.
+              </div>
             </div>
           </div>
 
           <div id="map" class="location-map" style="display: none;"></div>
+
+          <!-- Nearby Places Section -->
+          <div id="nearbyPlacesSection" class="nearby-section" style="display: none;">
+            <div class="nearby-header-bar">
+              <h3 style="margin: 0; font-size: 1.05rem; color: var(--gold-primary);">Explore Nearby Services</h3>
+              <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">
+                Find essential places near your location:
+              </p>
+            </div>
+            
+            <div class="nearby-filter-pills">
+              <button class="btn-nearby-pill active" data-type="police">Police Stations</button>
+              <button class="btn-nearby-pill" data-type="hospital">Hospitals & Clinics</button>
+              <button class="btn-nearby-pill" data-type="hotel">Hotels</button>
+              <button class="btn-nearby-pill" data-type="fuel">Gas Stations</button>
+              <button class="btn-nearby-pill" data-type="247">24/7 Safe Havens</button>
+              <button class="btn-nearby-pill" data-type="crowded">Crowded Safe Spots</button>
+            </div>
+
+            <div id="nearbyPlacesMsg" class="nearby-msg" style="display: none;"></div>
+            <div id="nearbyPlacesListContainer" class="nearby-cards-grid"></div>
+          </div>
+
           <div id="locationError" class="location-error" style="display: none;"></div>
         </section>
       </div>
@@ -1293,6 +1565,7 @@
     // --------------------------------------------------------------------------
     let leafletMap = null;
     let leafletMarker = null;
+    let leafletCircle = null;
 
     const getLocationBtn = document.getElementById('getLocationBtn');
     const locationInfoBox = document.getElementById('locationInfoBox');
@@ -1301,6 +1574,25 @@
     const latValue = document.getElementById('latValue');
     const lngValue = document.getElementById('lngValue');
     const accValue = document.getElementById('accValue');
+    const accuracyBadge = document.getElementById('accuracyBadge');
+
+    let watchId = null;
+    let bestAccuracy = Infinity;
+    let isFirstMapLoad = true;
+
+    function updateAccuracyBadge(acc) {
+      if (!accuracyBadge) return;
+      if (acc <= 25) {
+        accuracyBadge.textContent = '🟢 High Accuracy';
+        accuracyBadge.className = 'accuracy-badge high';
+      } else if (acc <= 100) {
+        accuracyBadge.textContent = '🟡 Moderate Accuracy';
+        accuracyBadge.className = 'accuracy-badge moderate';
+      } else {
+        accuracyBadge.textContent = '🟠 Approximate (Wi-Fi/IP)';
+        accuracyBadge.className = 'accuracy-badge approximate';
+      }
+    }
 
     if (getLocationBtn) {
       getLocationBtn.addEventListener('click', () => {
@@ -1312,48 +1604,184 @@
         }
 
         getLocationBtn.disabled = true;
-        getLocationBtn.textContent = '⏳ Retrieving Location...';
+        getLocationBtn.textContent = '⏳ Refining Location...';
 
-        navigator.geolocation.getCurrentPosition(
+        if (watchId !== null) {
+          navigator.geolocation.clearWatch(watchId);
+          watchId = null;
+        }
+        bestAccuracy = Infinity;
+        hasInitialNearbyFetched = false;
+        isFirstMapLoad = true;
+        for (let k in nearbyCache) delete nearbyCache[k];
+
+        const geoOptions = {
+          enableHighAccuracy: true,
+          timeout: 30000,
+          maximumAge: 0
+        };
+
+        const stopSamplingTimer = setTimeout(() => {
+          if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+          }
+          getLocationBtn.disabled = false;
+          getLocationBtn.textContent = '📍 Update Location';
+        }, 6000);
+
+        watchId = navigator.geolocation.watchPosition(
           (position) => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             const acc = position.coords.accuracy;
 
-            latValue.textContent = lat.toFixed(6);
-            lngValue.textContent = lng.toFixed(6);
-            accValue.textContent = `±${Math.round(acc)} meters`;
-            locationInfoBox.style.display = 'block';
+            if (acc <= bestAccuracy) {
+              bestAccuracy = acc;
 
-            mapContainer.style.display = 'block';
+              latValue.textContent = lat.toFixed(6);
+              lngValue.textContent = lng.toFixed(6);
+              accValue.textContent = `±${Math.round(acc)} meters`;
+              updateAccuracyBadge(acc);
 
-            if (!leafletMap && window.L) {
-              leafletMap = L.map('map').setView([lat, lng], 15);
+              const googleMapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
+              const locationMapUrl = document.getElementById('locationMapUrl');
+              if (locationMapUrl) {
+                locationMapUrl.href = googleMapsUrl;
+              }
 
-              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
-              }).addTo(leafletMap);
+              locationInfoBox.style.display = 'block';
+              mapContainer.style.display = 'block';
 
-              leafletMarker = L.marker([lat, lng]).addTo(leafletMap)
-                .bindPopup('<b>You are here</b>')
-                .openPopup();
-            } else if (leafletMap) {
-              leafletMap.setView([lat, lng], 15);
-              if (leafletMarker) {
-                leafletMarker.setLatLng([lat, lng])
+              if (!leafletMap && window.L) {
+                const streetTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
+                });
+
+                const satelliteTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                  attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                });
+
+                const terrainTile = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                  attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
+                });
+
+                leafletMap = L.map('map', {
+                  center: [lat, lng],
+                  zoom: 15,
+                  layers: [streetTile]
+                });
+
+                const baseMaps = {
+                  "Streets": streetTile,
+                  "Satellite": satelliteTile,
+                  "Terrain": terrainTile
+                };
+
+                const trafficOverlay = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                  opacity: 0.6,
+                  attribution: 'Live Traffic Data'
+                });
+
+                let heatPoints = [];
+                if (window.L && L.heatLayer) {
+                  heatOverlay = L.heatLayer(heatPoints, { radius: 25, blur: 15, maxZoom: 17 });
+                }
+
+                const overlayMaps = {
+                  "Live Traffic": trafficOverlay
+                };
+                if (heatOverlay) {
+                  overlayMaps["Crowd Heatmap"] = heatOverlay;
+                }
+
+                L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(leafletMap);
+
+                // Add Recenter / Back to My Location Control Button
+                const recenterControl = L.control({ position: 'topleft' });
+                recenterControl.onAdd = function() {
+                  const btn = L.DomUtil.create('button', 'leaflet-recenter-btn');
+                  btn.type = 'button';
+                  btn.innerHTML = '🎯';
+                  btn.title = 'Center on My Location';
+                  btn.onclick = function(e) {
+                    e.stopPropagation();
+                    if (currentUserLat && currentUserLng && leafletMap) {
+                      leafletMap.setView([currentUserLat, currentUserLng], 15);
+                      if (leafletCircle) leafletMap.fitBounds(leafletCircle.getBounds(), { padding: [20, 20] });
+                    }
+                  };
+                  return btn;
+                };
+                recenterControl.addTo(leafletMap);
+
+                leafletMarker = L.marker([lat, lng]).addTo(leafletMap)
                   .bindPopup('<b>You are here</b>')
                   .openPopup();
+
+                leafletCircle = L.circle([lat, lng], {
+                  radius: acc,
+                  color: '#e5a93b',
+                  weight: 2,
+                  fillColor: '#e5a93b',
+                  fillOpacity: 0.15
+                }).addTo(leafletMap);
+              } else if (leafletMap) {
+                leafletMap.setView([lat, lng], 15);
+                if (leafletMarker) {
+                  leafletMarker.setLatLng([lat, lng])
+                    .bindPopup('<b>You are here</b>')
+                    .openPopup();
+                }
+                if (!leafletCircle && window.L) {
+                  leafletCircle = L.circle([lat, lng], {
+                    radius: acc,
+                    color: '#e5a93b',
+                    weight: 2,
+                    fillColor: '#e5a93b',
+                    fillOpacity: 0.15
+                  }).addTo(leafletMap);
+                } else if (leafletCircle) {
+                  leafletCircle.setLatLng([lat, lng]);
+                  leafletCircle.setRadius(acc);
+                }
               }
+
+              if (leafletCircle && leafletMap && isFirstMapLoad) {
+                leafletMap.fitBounds(leafletCircle.getBounds(), { padding: [20, 20] });
+                isFirstMapLoad = false;
+              }
+
+              currentUserLat = lat;
+              currentUserLng = lng;
+              if (nearbyPlacesSection) nearbyPlacesSection.style.display = 'block';
+
+              if (!hasInitialNearbyFetched) {
+                hasInitialNearbyFetched = true;
+                fetchNearbyPlaces(currentNearbyCategory);
+              }
+
+              setTimeout(() => {
+                if (leafletMap) leafletMap.invalidateSize();
+              }, 200);
             }
 
-            setTimeout(() => {
-              if (leafletMap) leafletMap.invalidateSize();
-            }, 200);
-
-            getLocationBtn.disabled = false;
-            getLocationBtn.textContent = '📍 Update Location';
+            if (acc <= 15) {
+              clearTimeout(stopSamplingTimer);
+              if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+              }
+              getLocationBtn.disabled = false;
+              getLocationBtn.textContent = '📍 Update Location';
+            }
           },
           (error) => {
+            if (watchId !== null) {
+              navigator.geolocation.clearWatch(watchId);
+              watchId = null;
+            }
+            clearTimeout(stopSamplingTimer);
             getLocationBtn.disabled = false;
             getLocationBtn.textContent = '📍 Get My Location';
 
@@ -1374,11 +1802,7 @@
             }
             showLocationError(errMsg);
           },
-          {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 0
-          }
+          geoOptions
         );
       });
     }
@@ -1388,6 +1812,233 @@
         locationError.textContent = msg;
         locationError.style.display = 'block';
       }
+    }
+
+    const copyLocationLinkBtn = document.getElementById('copyLocationLinkBtn');
+    if (copyLocationLinkBtn) {
+      copyLocationLinkBtn.addEventListener('click', async () => {
+        const locationMapUrl = document.getElementById('locationMapUrl');
+        if (!locationMapUrl || !locationMapUrl.href || locationMapUrl.href.endsWith('#')) return;
+        try {
+          await navigator.clipboard.writeText(locationMapUrl.href);
+          copyLocationLinkBtn.textContent = '✓ Copied!';
+          setTimeout(() => {
+            copyLocationLinkBtn.textContent = '📋 Copy Link';
+          }, 2000);
+        } catch (err) {
+          console.error('Failed to copy location link:', err);
+        }
+      });
+    }
+
+    // --------------------------------------------------------------------------
+    // NEARBY PLACES SEARCH & CROWD DENSITY FEATURE (OVERPASS API WITH FALLBACKS)
+    // --------------------------------------------------------------------------
+    let currentNearbyCategory = 'police';
+    let currentUserLat = null;
+    let currentUserLng = null;
+    let nearbyMarkersGroup = [];
+    let heatOverlay = null;
+    let hasInitialNearbyFetched = false;
+    const nearbyCache = {};
+
+    const OVERPASS_MIRRORS = [
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.kumi.systems/api/interpreter',
+      'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+      'https://overpass.nchc.org.tw/api/interpreter'
+    ];
+
+    const crowdDensityValue = document.getElementById('crowdDensityValue');
+    const crowdDensityBadge = document.getElementById('crowdDensityBadge');
+
+    function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    async function fetchWithOverpassFallbacks(overpassQuery) {
+      for (const mirrorUrl of OVERPASS_MIRRORS) {
+        try {
+          const fullUrl = `${mirrorUrl}?data=${encodeURIComponent(overpassQuery)}`;
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
+          const res = await fetch(fullUrl, { signal: controller.signal });
+          clearTimeout(timeoutId);
+
+          if (!res.ok) continue; // Skip 429, 504, 502 error codes
+          const contentType = res.headers.get('content-type') || '';
+          if (!contentType.includes('json') && !contentType.includes('javascript')) {
+            continue; // Skip HTML error pages
+          }
+          const data = await res.json();
+          if (data && Array.isArray(data.elements)) {
+            return data.elements;
+          }
+        } catch (e) {
+          console.warn(`Overpass mirror ${mirrorUrl} failed or timed out:`, e);
+        }
+      }
+      return null;
+    }
+
+    async function analyzeCrowdDensity(lat, lng) {
+      if (!lat || !lng) return;
+      try {
+        const query = `[out:json];node(around:2000,${lat},${lng})[amenity~"bus_station|marketplace|food_court|university|school|bank"];out 30;`;
+        const elements = await fetchWithOverpassFallbacks(query);
+        const count = elements ? elements.length : 0;
+
+        if (crowdDensityValue && crowdDensityBadge) {
+          if (count >= 5) {
+            crowdDensityValue.textContent = 'High Activity Zone';
+            crowdDensityBadge.textContent = 'High Footfall';
+            crowdDensityBadge.className = 'accuracy-badge high';
+          } else if (count >= 2) {
+            crowdDensityValue.textContent = 'Moderate Activity Zone';
+            crowdDensityBadge.textContent = 'Moderate Footfall';
+            crowdDensityBadge.className = 'accuracy-badge moderate';
+          } else {
+            crowdDensityValue.textContent = 'Low Activity Zone';
+            crowdDensityBadge.textContent = 'Low Footfall';
+            crowdDensityBadge.className = 'accuracy-badge approximate';
+          }
+        }
+      } catch (err) {
+        console.error('Error analyzing crowd density:', err);
+      }
+    }
+
+    const nearbyPlacesSection = document.getElementById('nearbyPlacesSection');
+    const nearbyPlacesMsg = document.getElementById('nearbyPlacesMsg');
+    const nearbyPlacesListContainer = document.getElementById('nearbyPlacesListContainer');
+    const nearbyPillBtns = document.querySelectorAll('.btn-nearby-pill');
+
+    function clearNearbyMarkers() {
+      if (nearbyMarkersGroup.length > 0 && leafletMap) {
+        nearbyMarkersGroup.forEach(m => leafletMap.removeLayer(m));
+        nearbyMarkersGroup = [];
+      }
+    }
+
+    async function fetchNearbyPlaces(category = 'police') {
+      if (!currentUserLat || !currentUserLng || !leafletMap) return;
+
+      analyzeCrowdDensity(currentUserLat, currentUserLng);
+
+      clearNearbyMarkers();
+      if (nearbyPlacesListContainer) nearbyPlacesListContainer.innerHTML = '';
+
+      let queryTag = '[amenity=police]';
+      let categoryLabel = 'Police Station';
+
+      if (category === 'hospital') {
+        queryTag = '[amenity=hospital]';
+        categoryLabel = 'Hospital / Clinic';
+      } else if (category === 'hotel') {
+        queryTag = '[tourism=hotel]';
+        categoryLabel = 'Hotel';
+      } else if (category === 'fuel') {
+        queryTag = '[amenity=fuel]';
+        categoryLabel = 'Gas Station';
+      } else if (category === '247') {
+        queryTag = '[amenity~"police|hospital|fuel|pharmacy"]';
+        categoryLabel = '24/7 Safe Haven';
+      } else if (category === 'crowded') {
+        queryTag = '[amenity~"bus_station|marketplace|food_court|university"]';
+        categoryLabel = 'Crowded Safe Spot';
+      }
+
+      // Check cache first
+      let elements = nearbyCache[category];
+
+      if (!elements) {
+        if (nearbyPlacesMsg) {
+          nearbyPlacesMsg.textContent = 'Searching nearby places...';
+          nearbyPlacesMsg.style.display = 'block';
+        }
+        const overpassQuery = `[out:json];node(around:15000,${currentUserLat},${currentUserLng})${queryTag};out 50;`;
+        elements = await fetchWithOverpassFallbacks(overpassQuery);
+        if (elements) {
+          nearbyCache[category] = elements;
+        }
+      }
+
+      if (!elements || elements.length === 0) {
+        if (nearbyPlacesMsg) {
+          nearbyPlacesMsg.textContent = `No nearby ${categoryLabel.toLowerCase()}s found.`;
+          nearbyPlacesMsg.style.display = 'block';
+        }
+        return;
+      }
+
+      if (nearbyPlacesMsg) nearbyPlacesMsg.style.display = 'none';
+
+      // Update heat overlay points
+      if (heatOverlay) {
+        const heatLatLngs = elements.map(el => [el.lat, el.lon, 0.8]);
+        heatOverlay.setLatLngs(heatLatLngs);
+      }
+
+      // Calculate distance, sort ascending, and slice to top 5 nearest places
+      const top5Places = elements.map(el => {
+        const lat = el.lat;
+        const lng = el.lon;
+        const name = (el.tags && (el.tags.name || el.tags['name:en'])) || `${categoryLabel}`;
+        const dist = calculateDistanceKm(currentUserLat, currentUserLng, lat, lng);
+        return { name, lat, lng, dist };
+      }).sort((a, b) => a.dist - b.dist).slice(0, 5);
+
+      // Render markers on map and cards in list
+      top5Places.forEach(place => {
+        const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`;
+
+        // Add leaflet marker
+        if (window.L) {
+          const marker = L.marker([place.lat, place.lng]).addTo(leafletMap)
+            .bindPopup(`
+              <div style="font-family: inherit;">
+                <strong style="color: #0b0c10;">${place.name}</strong><br/>
+                <span style="font-size: 0.8rem; color: #555;">${place.dist.toFixed(2)} km away</span><br/>
+                <a href="${directionsUrl}" target="_blank" style="color: #e5a93b; font-weight: 700; font-size: 0.82rem;">Directions</a>
+              </div>
+            `);
+          nearbyMarkersGroup.push(marker);
+        }
+
+        // Add card to grid
+        if (nearbyPlacesListContainer) {
+          const card = document.createElement('div');
+          card.className = 'nearby-card';
+          card.innerHTML = `
+            <div class="nearby-card-title">${place.name}</div>
+            <div class="nearby-card-meta">
+              <span class="nearby-card-distance">${place.dist.toFixed(2)} km away</span>
+              <a href="${directionsUrl}" target="_blank" rel="noopener noreferrer" class="btn-directions">Directions</a>
+            </div>
+          `;
+          nearbyPlacesListContainer.appendChild(card);
+        }
+      });
+    }
+
+    // Attach pill click listeners
+    if (nearbyPillBtns) {
+      nearbyPillBtns.forEach(pill => {
+        pill.addEventListener('click', () => {
+          nearbyPillBtns.forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+          const cat = pill.getAttribute('data-type');
+          currentNearbyCategory = cat;
+          fetchNearbyPlaces(cat);
+        });
+      });
     }
 
     checkSession();
