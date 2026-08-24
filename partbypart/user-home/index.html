@@ -1893,8 +1893,16 @@
       };
       const queryTerm = searchTermMap[category] || 'police';
 
+      const deltaLat = 15 / 110.574;
+      const deltaLng = 15 / (111.32 * Math.abs(Math.cos(lat * Math.PI / 180)) || 1);
+      const minLat = lat - deltaLat;
+      const maxLat = lat + deltaLat;
+      const minLng = lng - deltaLng;
+      const maxLng = lng + deltaLng;
+      const viewbox = `${minLng},${maxLat},${maxLng},${minLat}`;
+
       try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryTerm)}&lat=${lat}&lon=${lng}&radius=15000&limit=15`;
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryTerm)}&viewbox=${viewbox}&bounded=1&limit=20`;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
         const res = await fetch(url, { signal: controller.signal });
@@ -1903,11 +1911,15 @@
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            return data.map(item => ({
+            const localItems = data.map(item => ({
               lat: parseFloat(item.lat),
               lon: parseFloat(item.lon),
               tags: { name: item.display_name.split(',')[0] }
-            }));
+            })).filter(item => calculateDistanceKm(lat, lng, item.lat, item.lon) <= 25);
+
+            if (localItems.length > 0) {
+              return localItems;
+            }
           }
         }
       } catch (e) {
@@ -1999,14 +2011,25 @@
         heatOverlay.setLatLngs(heatLatLngs);
       }
 
-      // Calculate distance, sort ascending, and slice to top 5 nearest places
-      const top5Places = elements.map(el => {
+      // Calculate distance, sort ascending, filter <= 25km, and slice to top 5 nearest places
+      let top5Places = elements.map(el => {
         const lat = el.lat;
         const lng = el.lon;
         const name = (el.tags && (el.tags.name || el.tags['name:en'])) || `${categoryLabel}`;
         const dist = calculateDistanceKm(currentUserLat, currentUserLng, lat, lng);
         return { name, lat, lng, dist };
-      }).sort((a, b) => a.dist - b.dist).slice(0, 5);
+      }).filter(p => p.dist <= 25).sort((a, b) => a.dist - b.dist).slice(0, 5);
+
+      if (top5Places.length === 0) {
+        const fallbackEls = getFallbackEmergencyPlaces(category, currentUserLat, currentUserLng);
+        top5Places = fallbackEls.map(el => {
+          const lat = el.lat;
+          const lng = el.lon;
+          const name = el.tags.name;
+          const dist = calculateDistanceKm(currentUserLat, currentUserLng, lat, lng);
+          return { name, lat, lng, dist };
+        }).sort((a, b) => a.dist - b.dist).slice(0, 5);
+      }
 
       // Render markers on map and cards in list
       top5Places.forEach(place => {
