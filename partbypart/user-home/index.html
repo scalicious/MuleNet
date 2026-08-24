@@ -1100,11 +1100,14 @@
         <h3 class="modal-title">📍 Received Location Alert</h3>
         <button class="modal-close-icon" onclick="closeReceivedLocationModal()">&times;</button>
       </div>
-      <div id="modalSenderInfo" style="font-weight: 600; font-size: 0.95rem; color: var(--text-white); margin-bottom: 4px;"></div>
+      <div id="modalSenderInfo" style="font-weight: 600; font-size: 0.98rem; color: var(--gold-primary); margin-bottom: 4px;"></div>
       <div id="modalAlertTime" style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;"></div>
-      <div id="modalAlertMap" style="height: 250px; border-radius: 12px; border: 1px solid var(--card-border); margin-bottom: 16px; overflow: hidden;"></div>
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-        <a id="modalGoogleMapsBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn-directions" style="text-decoration: none; font-size: 0.85rem; padding: 8px 16px;">Open in Google Maps ↗</a>
+      <div id="modalAlertMap" style="height: 260px; border-radius: 12px; border: 1px solid var(--card-border); margin-bottom: 16px; overflow: hidden; position: relative;"></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a id="modalRouteBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn-directions" style="text-decoration: none; font-size: 0.85rem; padding: 8px 16px; background: var(--gold-gradient); color: #08090a; border: none; font-weight: 700;">🚗 Find Route</a>
+          <a id="modalGoogleMapsBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn-directions" style="text-decoration: none; font-size: 0.85rem; padding: 8px 14px;">Open in Maps ↗</a>
+        </div>
         <button class="btn-copy-link" onclick="closeReceivedLocationModal()">Close</button>
       </div>
     </div>
@@ -2042,6 +2045,7 @@
       const senderInfo = document.getElementById('modalSenderInfo');
       const alertTime = document.getElementById('modalAlertTime');
       const gmapsBtn = document.getElementById('modalGoogleMapsBtn');
+      const routeBtn = document.getElementById('modalRouteBtn');
 
       const records = JSON.parse(localStorage.getItem('sos_sent_locations') || '[]');
       const alert = records.find(r => r.sender_email === senderEmail) || records[0];
@@ -2051,18 +2055,43 @@
       const alertMapsUrl = alert ? alert.maps_url : `https://maps.google.com/?q=${alertLat},${alertLng}`;
       const alertDateStr = alert ? `${alert.date} at ${alert.timestamp}` : 'Recently Received';
 
+      let routeUrl = `https://www.google.com/maps/dir/?api=1&destination=${alertLat},${alertLng}`;
+      if (currentUserLat && currentUserLng) {
+        routeUrl = `https://www.google.com/maps/dir/?api=1&origin=${currentUserLat},${currentUserLng}&destination=${alertLat},${alertLng}`;
+      }
+
       if (senderInfo) senderInfo.textContent = `Received from: ${senderEmail}`;
       if (alertTime) alertTime.textContent = `Sent on: ${alertDateStr} • Accuracy: High`;
       if (gmapsBtn) gmapsBtn.href = alertMapsUrl;
+      if (routeBtn) routeBtn.href = routeUrl;
 
       if (modal) modal.style.display = 'flex';
 
       setTimeout(() => {
         if (!modalMapInstance && window.L) {
-          modalMapInstance = L.map('modalAlertMap', { center: [alertLat, alertLng], zoom: 15 });
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          const streetTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap'
-          }).addTo(modalMapInstance);
+          });
+          const satelliteTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri'
+          });
+          const terrainTile = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data: &copy; OpenStreetMap'
+          });
+
+          modalMapInstance = L.map('modalAlertMap', {
+            center: [alertLat, alertLng],
+            zoom: 15,
+            layers: [streetTile]
+          });
+
+          const baseMaps = {
+            "Streets": streetTile,
+            "Satellite": satelliteTile,
+            "Terrain": terrainTile
+          };
+          L.control.layers(baseMaps, null, { position: 'topright' }).addTo(modalMapInstance);
+
           modalMarkerInstance = L.marker([alertLat, alertLng]).addTo(modalMapInstance)
             .bindPopup(`<b>${senderEmail}</b><br/>Location received`)
             .openPopup();
