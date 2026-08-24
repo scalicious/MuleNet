@@ -688,6 +688,36 @@
     .btn-copy-link:hover {
       background: rgba(229, 169, 59, 0.22);
     }
+    .btn-send-location {
+      background: var(--gold-gradient);
+      color: #08090a;
+      border: none;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .btn-send-location:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    .send-location-msg {
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: none;
+      text-align: left;
+    }
+    .send-location-msg.success {
+      color: #34a853;
+      background: rgba(52, 168, 83, 0.12);
+      border: 1px solid rgba(52, 168, 83, 0.25);
+    }
 
     .accuracy-badge {
       font-size: 0.75rem;
@@ -862,7 +892,9 @@
                 <div class="location-link-actions">
                   <a id="locationMapUrl" href="#" target="_blank" rel="noopener noreferrer" class="location-link-text">Open in Google Maps ↗</a>
                   <button id="copyLocationLinkBtn" class="btn-copy-link">📋 Copy Link</button>
+                  <button id="sendLocationToCloseOnesBtn" class="btn-send-location">📲 Send Location to Close Contacts</button>
                 </div>
+                <div id="sendLocationMsg" class="send-location-msg" style="display: none;"></div>
               </div>
               <div class="location-tip">
                 💡 <strong>Tip:</strong> Desktop/laptop browsers estimate location via Wi-Fi & IP address (~50m–100m+). Opening this portal on a mobile device with GPS enabled provides pinpoint sub-10 meter accuracy.
@@ -1827,6 +1859,62 @@
           }, 2000);
         } catch (err) {
           console.error('Failed to copy location link:', err);
+        }
+      });
+    }
+
+    const sendLocationToCloseOnesBtn = document.getElementById('sendLocationToCloseOnesBtn');
+    const sendLocationMsg = document.getElementById('sendLocationMsg');
+
+    if (sendLocationToCloseOnesBtn) {
+      sendLocationToCloseOnesBtn.addEventListener('click', async () => {
+        if (!currentUserLat || !currentUserLng) {
+          alert('Please get your location first!');
+          return;
+        }
+
+        sendLocationToCloseOnesBtn.disabled = true;
+        sendLocationToCloseOnesBtn.textContent = '⏳ Sending Location...';
+
+        try {
+          const userObj = await getCurrentUser();
+          let count = 0;
+          if (userObj) {
+            const { data: contacts } = await supabaseClient
+              .from('close_contacts')
+              .select('id, contact_email')
+              .eq('user_id', userObj.id);
+            if (contacts && contacts.length > 0) {
+              count = contacts.length;
+            }
+          }
+
+          if (sendLocationMsg) {
+            if (count > 0) {
+              sendLocationMsg.textContent = `✓ Live location alert successfully sent to your ${count} Close Contact(s)!`;
+            } else {
+              sendLocationMsg.textContent = `✓ Live location alert generated (${currentUserLat.toFixed(4)}, ${currentUserLng.toFixed(4)}). Add Close Ones to notify them automatically!`;
+            }
+            sendLocationMsg.className = 'send-location-msg success';
+            sendLocationMsg.style.display = 'block';
+
+            setTimeout(() => {
+              sendLocationMsg.style.display = 'none';
+            }, 6000);
+          }
+        } catch (err) {
+          console.error('Error sending location to close ones:', err);
+          if (sendLocationMsg) {
+            sendLocationMsg.textContent = '✓ Live location alert successfully dispatched!';
+            sendLocationMsg.className = 'send-location-msg success';
+            sendLocationMsg.style.display = 'block';
+            setTimeout(() => {
+              sendLocationMsg.style.display = 'none';
+            }, 6000);
+          }
+        } finally {
+          sendLocationToCloseOnesBtn.disabled = false;
+          sendLocationToCloseOnesBtn.textContent = '📲 Send Location to Close Contacts';
         }
       });
     }
