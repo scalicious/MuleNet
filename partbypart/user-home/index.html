@@ -1886,7 +1886,7 @@
       const searchTermMap = {
         police: 'police station',
         hospital: 'hospital',
-        hotel: 'hotel',
+        hotel: 'hotel lodging',
         fuel: 'gas station',
         '247': 'pharmacy',
         crowded: 'bus station'
@@ -1902,7 +1902,7 @@
       const viewbox = `${minLng},${maxLat},${maxLng},${minLat}`;
 
       try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryTerm)}&viewbox=${viewbox}&bounded=1&limit=20`;
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryTerm)}&viewbox=${viewbox}&bounded=1&limit=25`;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
         const res = await fetch(url, { signal: controller.signal });
@@ -1911,11 +1911,18 @@
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            const localItems = data.map(item => ({
+            let localItems = data.map(item => ({
               lat: parseFloat(item.lat),
               lon: parseFloat(item.lon),
               tags: { name: item.display_name.split(',')[0] }
             })).filter(item => calculateDistanceKm(lat, lng, item.lat, item.lon) <= 25);
+
+            if (category === 'hotel') {
+              localItems = localItems.filter(item => {
+                const nameLower = (item.tags.name || '').toLowerCase();
+                return !nameLower.includes('hostel') && !nameLower.includes('dormitory') && !nameLower.includes('block');
+              });
+            }
 
             if (localItems.length > 0) {
               return localItems;
