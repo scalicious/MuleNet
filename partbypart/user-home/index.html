@@ -1844,9 +1844,9 @@
 
     const OVERPASS_MIRRORS = [
       'https://overpass-api.de/api/interpreter',
-      'https://overpass.kumi.systems/api/interpreter',
-      'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
-      'https://overpass.nchc.org.tw/api/interpreter'
+      'https://lz4.overpass-api.de/api/interpreter',
+      'https://z.overpass-api.de/api/interpreter',
+      'https://overpass.private.coffee/api/interpreter'
     ];
 
     const crowdDensityValue = document.getElementById('crowdDensityValue');
@@ -1868,7 +1868,7 @@
         try {
           const fullUrl = `${mirrorUrl}?data=${encodeURIComponent(overpassQuery)}`;
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
           const res = await fetch(fullUrl, { signal: controller.signal });
           clearTimeout(timeoutId);
 
@@ -1882,7 +1882,7 @@
             return data.elements;
           }
         } catch (e) {
-          console.warn(`Overpass mirror ${mirrorUrl} failed or timed out:`, e);
+          // Silent fallback to next mirror without flooding console
         }
       }
       return null;
