@@ -1877,7 +1877,8 @@
         sendLocationToCloseOnesBtn.textContent = '⏳ Sending Location...';
 
         try {
-          const userObj = await getCurrentUser();
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          const userObj = session ? session.user : null;
           let count = 0;
           if (userObj) {
             const { data: contacts } = await supabaseClient
