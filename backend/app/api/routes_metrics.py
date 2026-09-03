@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select, func
+import logging
+logger = logging.getLogger(__name__)
 from app.core.db import get_session
 from app.models.entities import DecisionLogEntity
 from app.models.schema import MetricsResponse
