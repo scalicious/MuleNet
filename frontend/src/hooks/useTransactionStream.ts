@@ -117,28 +117,32 @@ export function useTransactionStream({
           ? streamTx.amount
           : parseFloat(String(streamTx.amount).replace(/[^0-9.]/g, '')) || 5000;
 
+      // Use real backend fused score if available, otherwise fallback to tier-based range
       const riskScore =
-        streamTx.riskLevel === 'CRITICAL'
-          ? Math.floor(Math.random() * 8) + 92
-          : streamTx.riskLevel === 'HIGH'
-          ? Math.floor(Math.random() * 15) + 70
-          : streamTx.riskLevel === 'MEDIUM'
-          ? Math.floor(Math.random() * 25) + 40
-          : Math.floor(Math.random() * 25) + 10;
+        typeof streamTx.riskScore === 'number'
+          ? streamTx.riskScore
+          : (typeof streamTx.fusedScore === 'number'
+              ? Math.round(streamTx.fusedScore * 100)
+              : (streamTx.riskLevel === 'CRITICAL'
+                  ? Math.floor(Math.random() * 8) + 92
+                  : streamTx.riskLevel === 'HIGH'
+                  ? Math.floor(Math.random() * 15) + 70
+                  : streamTx.riskLevel === 'MEDIUM'
+                  ? Math.floor(Math.random() * 25) + 40
+                  : Math.floor(Math.random() * 25) + 10));
 
-      const status: EnforcementStatus =
-        streamTx.riskLevel === 'CRITICAL'
-          ? 'BLOCKED'
-          : streamTx.riskLevel === 'HIGH'
-          ? 'CHALLENGED'
-          : streamTx.riskLevel === 'MEDIUM'
-          ? 'FLAGGED'
-          : 'ALLOWED';
+      // Derive status from backend recommendedAction or riskLevel
+      let status: EnforcementStatus = 'ALLOWED';
+      if (streamTx.recommendedAction === 'HOLD_FOR_REVIEW' || streamTx.riskLevel === 'CRITICAL') {
+        status = 'BLOCKED';
+      } else if (streamTx.recommendedAction === 'STEP_UP_AUTH' || streamTx.riskLevel === 'HIGH') {
+        status = 'CHALLENGED';
+      } else if (streamTx.recommendedAction === 'SOFT_CHALLENGE' || streamTx.riskLevel === 'MEDIUM') {
+        status = 'FLAGGED';
+      }
 
       const newTx: Transaction = {
-        id: streamTx.id.startsWith('TXN-')
-          ? streamTx.id
-          : `TXN-${Math.floor(Math.random() * 89999 + 10000)}`,
+        id: streamTx.id || `TXN-${Math.floor(Math.random() * 89999 + 10000)}`,
         timestamp: streamTx.time,
         sender: streamTx.sender,
         receiver: streamTx.receiver,

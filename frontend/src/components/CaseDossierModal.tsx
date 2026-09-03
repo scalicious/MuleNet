@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   ShieldAlert,
@@ -12,6 +12,7 @@ import {
   DollarSign,
   AlertOctagon,
   ShieldCheck,
+  RefreshCw,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -24,6 +25,7 @@ import {
 } from 'recharts';
 import { Transaction, TransactionDossier } from '../types/risk';
 import { createMockDossier } from '../api/mockDossier';
+import { getTransactionDossier } from '../services/transactionService';
 import RiskBadge from './RiskBadge';
 
 export interface CaseDossierModalProps {
@@ -42,8 +44,44 @@ export default function CaseDossierModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Derive dossier from transaction if not directly provided
-  const dossier = customDossier || (transaction ? createMockDossier(transaction) : null);
+  const [dossier, setDossier] = useState<TransactionDossier | null>(
+    customDossier || (transaction ? createMockDossier(transaction) : null)
+  );
+  const [isLoadingBackend, setIsLoadingBackend] = useState<boolean>(false);
+
+  // Fetch real backend dossier from GET /cases/{id} when transaction changes
+  useEffect(() => {
+    if (customDossier) {
+      setDossier(customDossier);
+      return;
+    }
+    if (!transaction) {
+      setDossier(null);
+      return;
+    }
+
+    // Set immediate responsive fallback
+    setDossier(createMockDossier(transaction));
+
+    let isMounted = true;
+    setIsLoadingBackend(true);
+    getTransactionDossier(transaction.id)
+      .then((backendDossier) => {
+        if (isMounted && backendDossier) {
+          setDossier(backendDossier);
+        }
+      })
+      .catch((err) => {
+        console.warn(`[CaseDossierModal] Fallback to local dossier for ${transaction.id}:`, err);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingBackend(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [transaction, customDossier]);
 
   // Escape key & scroll lock handling
   useEffect(() => {

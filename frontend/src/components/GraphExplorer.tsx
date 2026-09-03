@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { GraphData, GraphNode, GraphLink, RiskTier } from '../types/risk';
 import { MOCK_GRAPH_DATA } from '../api/mockGraphData';
+import { apiClient } from '../services/apiClient';
 import RiskBadge from './RiskBadge';
 
 const RISK_PALETTES: Record<
@@ -65,11 +66,85 @@ export default function GraphExplorer({
   const containerRef = useRef<HTMLDivElement>(null);
   const fgRef = useRef<ForceGraphMethods>(null);
 
+  const [graphData, setGraphData] = useState<GraphData>(initialData);
   const [dimensions, setDimensions] = useState({ width: 800, height: 560 });
   const [internalSelectedNode, setInternalSelectedNode] = useState<GraphNode | null>(null);
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [selectedClusterFilter, setSelectedClusterFilter] = useState<string | null>(null);
+
+  // Sync with initialData if provided externally
+  useEffect(() => {
+    if (initialData && initialData.nodes?.length > 0) {
+      setGraphData((prev) => (prev.nodes.length === 0 ? initialData : prev));
+    }
+  }, [initialData]);
+
+  // Dynamically fetch backend 1-2 hop ego-subgraph when an account is selected
+  useEffect(() => {
+    if (!selectedAccountId) return;
+
+    let isMounted = true;
+    const fetchBackendEgoGraph = async () => {
+      try {
+        const res = await apiClient.get<any>(`/graph/ego/${selectedAccountId}?hops=2`);
+        if (!isMounted || !res || !res.nodes || res.nodes.length === 0) return;
+
+        // Map backend ego nodes & links with GAT attention weights
+        const backendNodes: GraphNode[] = res.nodes.map((bn: any) => ({
+          id: bn.id,
+          label: bn.label || bn.id,
+          riskTier: (bn.risk_tier || bn.riskTier || 'LOW') as RiskTier,
+          riskScore: bn.risk_tier === 'CRITICAL' ? 95 : (bn.risk_tier === 'HIGH' ? 82 : (bn.risk_tier === 'MEDIUM' ? 55 : 20)),
+          transactedVolume: bn.transactedVolume || 84000,
+          isFocus: bn.is_focus || bn.id === selectedAccountId,
+          muleCluster: bn.mule_cluster || bn.muleCluster || (bn.risk_tier === 'CRITICAL' ? 'SYNDICATE_ALPHA' : undefined),
+        }));
+
+        const backendLinks: GraphLink[] = (res.links || []).map((bl: any) => ({
+          source: bl.source,
+          target: bl.target,
+          amount: bl.amount || 10000,
+          isRisky: bl.is_risky || bl.gat_attention > 0.7,
+          riskScore: bl.gat_attention ? Math.round(bl.gat_attention * 100) : 50,
+          riskTier: bl.gat_attention > 0.7 ? 'CRITICAL' : 'LOW',
+        }));
+
+        // Merge seamlessly with existing graph data
+        setGraphData((prev) => {
+          const existingNodeIds = new Set(prev.nodes.map((n) => n.id));
+          const mergedNodes = [...prev.nodes];
+          backendNodes.forEach((bn) => {
+            if (!existingNodeIds.has(bn.id)) {
+              mergedNodes.push(bn);
+              existingNodeIds.add(bn.id);
+            }
+          });
+
+          const existingLinkKeys = new Set(
+            prev.links.map((l) => `${typeof l.source === 'object' ? (l.source as any).id : l.source}-${typeof l.target === 'object' ? (l.target as any).id : l.target}`)
+          );
+          const mergedLinks = [...prev.links];
+          backendLinks.forEach((bl) => {
+            const key = `${bl.source}-${bl.target}`;
+            if (!existingLinkKeys.has(key)) {
+              mergedLinks.push(bl);
+              existingLinkKeys.add(key);
+            }
+          });
+
+          return { nodes: mergedNodes, links: mergedLinks };
+        });
+      } catch (err) {
+        console.warn(`[GraphExplorer] Could not fetch backend ego graph for ${selectedAccountId}:`, err);
+      }
+    };
+
+    fetchBackendEgoGraph();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedAccountId]);
 
   // Motion preference detection
   useEffect(() => {
@@ -128,9 +203,9 @@ export default function GraphExplorer({
   // Compute adjacency for 2-hop neighborhoods
   const adjacency = useMemo(() => {
     const map = new Map<string, Set<string>>();
-    initialData.nodes.forEach((n) => map.set(n.id, new Set()));
+    graphData.nodes.forEach((n) => map.set(n.id, new Set()));
 
-    initialData.links.forEach((link) => {
+    graphData.links.forEach((link) => {
       const sourceId = typeof link.source === 'object' ? (link.source as GraphNode).id : (link.source as string);
       const targetId = typeof link.target === 'object' ? (link.target as GraphNode).id : (link.target as string);
 
@@ -141,15 +216,15 @@ export default function GraphExplorer({
       map.get(targetId)?.add(sourceId);
     });
     return map;
-  }, [initialData]);
+  }, [graphData]);
 
   // Selected node
   const activeSelected = useMemo(() => {
     if (selectedAccountId) {
-      return initialData.nodes.find((n) => n.id === selectedAccountId) || null;
+      return graphData.nodes.find((n) => n.id === selectedAccountId) || null;
     }
     return internalSelectedNode;
-  }, [selectedAccountId, internalSelectedNode, initialData]);
+  }, [selectedAccountId, internalSelectedNode, graphData]);
 
   // Calculate 2-hop neighborhood set around activeSelected
   const { directNeighbors, twoHopNeighbors } = useMemo(() => {
@@ -566,7 +641,7 @@ export default function GraphExplorer({
           ref={fgRef}
           width={dimensions.width}
           height={dimensions.height}
-          graphData={initialData}
+          graphData={graphData}
           nodeId="id"
           nodeCanvasObject={drawNode}
           nodePointerAreaPaint={(node: any, color, ctx) => {

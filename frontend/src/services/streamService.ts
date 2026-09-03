@@ -5,8 +5,14 @@ export interface StreamTransaction {
   time: string;
   sender: string;
   receiver: string;
-  amount: string;
+  amount: string | number;
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  fusedScore?: number;
+  riskScore?: number;
+  recommendedAction?: string;
+  typologies?: Array<{ name: string; evidence: string }>;
+  shapFactors?: Array<{ feature: string; impact: number; explanation?: string }>;
+  lenses?: { sequence_score?: number; network_score?: number; context_score?: number; anomaly_score?: number };
   isNew?: boolean;
 }
 
@@ -41,7 +47,7 @@ export function generateMockStreamTransaction(): StreamTransaction {
   const riskLevel = RISK_TIERS[Math.floor(Math.random() * RISK_TIERS.length)];
 
   return {
-    id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    id: `TXN-${Date.now().toString().slice(-5)}`,
     time,
     sender,
     receiver,
@@ -80,13 +86,25 @@ export function connectTransactionStream(
       if (isClosed) return;
       try {
         const raw = JSON.parse(event.data);
+        const txId = raw.transaction_id || raw.id || `TXN-${Date.now().toString().slice(-5)}`;
+        const fusedScore = typeof raw.fused_score === 'number' ? raw.fused_score : (typeof raw.fusedScore === 'number' ? raw.fusedScore : undefined);
+        const riskScore = fusedScore !== undefined ? Math.round(fusedScore * 100) : undefined;
+        
         const tx: StreamTransaction = {
-          id: raw.id || `tx-${Date.now()}`,
-          time: raw.timestamp ? raw.timestamp.split('T')[1]?.split('.')[0] || raw.timestamp : new Date().toTimeString().split(' ')[0],
+          id: txId,
+          time: raw.timestamp
+            ? (raw.timestamp.includes('T') ? raw.timestamp.split('T')[1]?.split('.')[0] : raw.timestamp)
+            : new Date().toTimeString().split(' ')[0],
           sender: raw.sender || raw.sender_id || 'ACC-UNKNOWN',
           receiver: raw.receiver || raw.receiver_id || 'ACC-UNKNOWN',
           amount: typeof raw.amount === 'number' ? `$${raw.amount.toLocaleString()}` : (raw.amount || '$0'),
           riskLevel: raw.riskTier || raw.risk_tier || 'LOW',
+          fusedScore,
+          riskScore,
+          recommendedAction: raw.recommended_action || raw.recommendedAction,
+          typologies: raw.typologies || [],
+          shapFactors: raw.shap_factors || raw.shapFactors || [],
+          lenses: raw.lenses,
           isNew: true,
         };
         onTransaction(tx);

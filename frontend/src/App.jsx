@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import DashboardHeader from './components/DashboardHeader';
 import MetricsBar from './components/MetricsBar';
+import AttackSimulatorPanel from './components/AttackSimulatorPanel';
 import LiveTransactionFeed from './components/LiveTransactionFeed';
 import GraphExplorer from './components/GraphExplorer';
 import CaseDossierModal from './components/CaseDossierModal';
@@ -23,6 +24,10 @@ export default function App() {
     setSelectedAccountId(accId);
   };
 
+  const handleAttackInjected = (scenarioType, txnId) => {
+    console.info(`[App] Adversarial pattern injected: ${scenarioType} [${txnId}]`);
+  };
+
   return (
     <div className="min-h-screen bg-[#0b0f17] text-slate-100 flex flex-col font-sans selection:bg-cyan-500/20 selection:text-cyan-200 overflow-x-hidden">
       {/* 1. Dashboard Header */}
@@ -30,12 +35,17 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 w-full max-w-[1560px] mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-7 flex flex-col gap-6">
-        {/* 2. KPI Metrics Bar */}
+        {/* 2. KPI Metrics Bar (Live SQLite Aggregations) */}
         <section aria-label="Key Performance Indicators">
           <MetricsBar />
         </section>
 
-        {/* 3. Main Intelligence Area: Risk Graph (Primary) + Live Feed */}
+        {/* 3. Adversarial Attack Simulator (Judge Interactive Controls) */}
+        <section aria-label="Adversarial Attack Simulator">
+          <AttackSimulatorPanel onAttackInjected={handleAttackInjected} />
+        </section>
+
+        {/* 4. Main Intelligence Area: Risk Graph (Primary) + Live Feed */}
         <section
           aria-label="Main Intelligence Console"
           className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch"

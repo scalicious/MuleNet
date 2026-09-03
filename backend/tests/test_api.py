@@ -246,3 +246,39 @@ def test_simulator_presets_and_queue_api():
     assert clear_res.status_code == 200
     assert clear_res.json()["status"] == "CLEARED"
 
+
+# ============================================================================
+# Frontend-Backend Merged Route Integration Tests
+# ============================================================================
+
+def test_transaction_dossier_alias_and_lookup():
+    """Validates /transactions/{id}/dossier and /transactions/{id} endpoints."""
+    # Test dossier alias
+    dossier_res = client.get("/api/v1/transactions/TXN-80412/dossier")
+    assert dossier_res.status_code == 200
+    data = dossier_res.json()
+    assert data["transaction_id"] == "TXN-80412"
+    assert "fused_score" in data
+    assert "typologies" in data
+
+    # Test single transaction lookup
+    txn_res = client.get("/api/v1/transactions/TXN-80412")
+    assert txn_res.status_code == 200
+    txn = txn_res.json()
+    assert txn["id"] == "TXN-80412"
+    assert "amount" in txn
+    assert "riskScore" in txn
+
+
+def test_account_profile_endpoint():
+    """Validates /accounts/{account_id} endpoint used by frontend accountService."""
+    acc_res = client.get("/api/v1/accounts/BANK04_ACC9011")
+    assert acc_res.status_code == 200
+    acc = acc_res.json()
+    assert acc["accountId"] == "BANK04_ACC9011"
+    assert "status" in acc
+    assert "flags" in acc
+    assert "activitySummary" in acc
+    assert acc["activitySummary"]["totalInflow30d"] > 0
+
+
