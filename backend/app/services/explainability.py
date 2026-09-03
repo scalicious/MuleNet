@@ -38,3 +38,22 @@ class ExplainabilityEngine:
         "unusual_time_of_day": "Transaction executed during hours highly atypical for this account profile.",
         "velocity_limit_breach": "Account has breached standard volume velocity thresholds for this tier."
     }
+
+    @classmethod
+    def _map_feature_to_sentence(cls, feature: str, impact: float, default: str) -> str:
+        """
+        Maps a raw feature string to its human-readable counterpart based on impact magnitude.
+        """
+        if feature in cls.SEQUENCE_DICTIONARY:
+            base = cls.SEQUENCE_DICTIONARY[feature]
+            return f"{base} (Impact: {impact:.2f})"
+            
+        if feature in cls.NETWORK_DICTIONARY:
+            base = cls.NETWORK_DICTIONARY[feature]
+            return f"{base} (Network Signal)"
+            
+        if feature in cls.CONTEXT_DICTIONARY:
+            base = cls.CONTEXT_DICTIONARY[feature]
+            return f"{base} (Context Signal)"
+            
+        return default
