@@ -53,6 +53,7 @@ class TypologyDetector:
         is_ring_member: bool = False,
         historical_amounts: List[float] = None
     ) -> List[Dict[str, str]]:
+        # Ensure immutable defaults
         if historical_amounts is None:
             historical_amounts = []
             
