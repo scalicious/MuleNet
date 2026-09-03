@@ -14,7 +14,7 @@
 </head>
 <body>
 
-  <!-- Enhanced Background System: Ambient Glow Orbs, Grid & Floating Dust Particles -->
+  <!-- Light Blueish Cyber Background: Ambient Orbs, Grid & Dust Particles -->
   <div class="cyber-bg">
     <div class="glow-orb glow-orb-1"></div>
     <div class="glow-orb glow-orb-2"></div>
@@ -38,22 +38,34 @@
     </div>
   </header>
 
-  <!-- Centered Main Auth Page Layout -->
+  <!-- Centered Main Page Layout -->
   <main class="auth-wrapper">
+    
+    <!-- Hero Headline Header in Middle matching Reference Photo -->
+    <div class="hero-text-container">
+      <div class="corner-bracket tl"></div>
+      <div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div>
+      <div class="corner-bracket br"></div>
+      <h1 class="hero-text-heading">
+        Detect. Protect.<br>
+        <span class="hero-text-highlight"><span class="hero-text-arrow">[&rarr;]</span> Respond.</span>
+      </h1>
+      <div class="hero-dotted-underline"></div>
+    </div>
+
+    <!-- Centered Login Box Container -->
     <div class="security-panel">
       
-      <!-- White Corner Crop Brackets matching [ ┌ ┐ └ ┘ ] in Reference Photo -->
+      <!-- White Corner Crop Brackets matching [ ┌ ┐ └ ┘ ] -->
       <div class="corner-bracket tl"></div>
       <div class="corner-bracket tr"></div>
       <div class="corner-bracket bl"></div>
       <div class="corner-bracket br"></div>
 
-      <!-- Panel Header & Branding -->
+      <!-- Panel Header & Title (Badge Removed) -->
       <div class="panel-header">
-        <div class="brand-badge">
-          DETECT &bull; PROTECT &bull; RESPOND
-        </div>
-        <h1 class="panel-title" id="panelTitle">Sign In</h1>
+        <h2 class="panel-title" id="panelTitle">Sign In</h2>
         <p class="panel-subtitle" id="panelSubtitle">Welcome back! Enter your details to continue.</p>
       </div>
 
@@ -137,7 +149,7 @@
           <form class="auth-form" id="signupOtpForm" novalidate>
             <div class="auth-message" id="otpMsg" role="alert"></div>
             <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-bottom: 12px;">
-              Verification code sent to <strong id="displayTargetEmail" style="color: var(--amber-primary);"></strong>
+              Verification code sent to <strong id="displayTargetEmail" style="color: var(--cyan-glow);"></strong>
             </p>
             <div class="form-group">
               <label class="form-label" for="otp-input">Enter 6-Digit Code</label>
@@ -217,7 +229,7 @@
           <form class="auth-form" id="forgotOtpForm" novalidate>
             <div class="auth-message" id="forgotOtpMsg" role="alert"></div>
             <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-bottom: 12px;">
-              Reset code sent to <strong id="displayForgotTargetEmail" style="color: var(--amber-primary);"></strong>
+              Reset code sent to <strong id="displayForgotTargetEmail" style="color: var(--cyan-glow);"></strong>
             </p>
             <div class="form-group">
               <label class="form-label" for="forgot-otp-input">Enter 6-Digit Code</label>
@@ -272,7 +284,7 @@
     </div>
   </main>
 
-  <!-- Bottom Red-Amber Gradient Glow Footer matching Reference Photo S/C '26 -->
+  <!-- Bottom Cyan/Blue Glowing Footer -->
   <footer class="bottom-glow-bar">
     <div class="bottom-matrix-overlay">
       01001101 01010101 01001100 01000101 01001110 01000101 01010101 01001101 01010101 01001100 01000101 01001110 01000101 01010101
