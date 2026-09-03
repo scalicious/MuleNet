@@ -12,6 +12,23 @@ class DemoRunner:
         self.injected_queue: asyncio.Queue = asyncio.Queue()
 
     async def inject_scenario(self, scenario_type: str, account_id: str, amount: float):
+        # Map scenario_type to the precise typology name and evidence from Person 5's rules
+        typology_name = "Simulated Attack"
+        typology_evidence = "Synthetic injected pattern."
+        
+        if scenario_type == "ATO":
+            typology_name = "Rapid Pass-Through Mule Behavior"
+            typology_evidence = f"Large transfer (${amount:,.2f}) executed 2 minutes after account/payee modification."
+        elif scenario_type == "SMURFING":
+            typology_name = "Smurfing / Structuring"
+            typology_evidence = "3 transactions detected just below the $10k reporting threshold."
+        elif scenario_type == "RING_WASH":
+            typology_name = "Cross-Bank Coordinated Mule Ring"
+            typology_evidence = "Account identified in a circular transaction flow traversing multiple financial entities."
+        elif scenario_type == "FAN_IN":
+            typology_name = "Fan-In Collection Hub"
+            typology_evidence = "Account interacts with 6 distinct counterparties in active window."
+
         scenario_event = {
             "transaction_id": f"INJ-{random.randint(10000, 99999)}",
             "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -19,19 +36,19 @@ class DemoRunner:
             "receiver_id": f"BANK04_ACC{random.randint(5000, 9999)}",
             "amount": amount or 49500.0,
             "currency": "USD",
-            "fused_score": 0.93 if scenario_type == "ATO" else 0.86,
+            "fused_score": 0.93 if scenario_type in ["ATO", "RING_WASH"] else 0.86,
             "risk_tier": "CRITICAL",
             "recommended_action": "HOLD_FOR_REVIEW",
             "lenses": {
-                "sequence_score": 0.95,
-                "network_score": 0.88,
+                "sequence_score": 0.95 if scenario_type in ["ATO", "SMURFING"] else 0.45,
+                "network_score": 0.98 if scenario_type in ["RING_WASH", "FAN_IN"] else 0.38,
                 "context_score": 0.75,
                 "anomaly_score": 0.82
             },
             "typologies": [
                 {
-                    "name": f"Simulated {scenario_type} Attack",
-                    "evidence": f"Synthetic injected {scenario_type} pattern triggered instant Level 2 alert."
+                    "name": typology_name,
+                    "evidence": typology_evidence
                 }
             ],
             "shap_factors": [
@@ -74,7 +91,7 @@ class DemoRunner:
                         "anomaly_score": round(score * random.uniform(0.85, 1.05), 2),
                     },
                     "typologies": [
-                        {"name": "Rapid Pass-Through", "evidence": "Funds forwarded quickly."}
+                        {"name": "Rapid Pass-Through Mule Behavior", "evidence": "Funds forwarded quickly."}
                     ] if is_risky else [],
                     "shap_factors": [
                         {"feature": "setup_gap", "impact": 0.35, "explanation": "Rapid modification before transfer."}
