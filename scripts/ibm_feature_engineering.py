@@ -238,3 +238,118 @@ def compute_engineered_records(
         timestamps = sorted(out_timestamps.get(nid, []))
         burst_score = 1
         if len(timestamps) >= 2:
+            # sliding window max count within 60 minutes
+            for i, t in enumerate(timestamps):
+                window_cnt = 0
+                for t2 in timestamps[i:]:
+                    if t2 - t <= 60:
+                        window_cnt += 1
+                    else:
+                        break
+                if window_cnt > burst_score:
+                    burst_score = window_cnt
+        
+        # Entity Type one-hot indicators
+        ent_str = entity_map.get(nid, "")
+        is_corp = 1.0 if "Corporation" in ent_str else 0.0
+        is_sole = 1.0 if "Sole Proprietorship" in ent_str else 0.0
+        is_part = 1.0 if "Partnership" in ent_str else 0.0
+        
+        # Multi-signal extreme flags (80th and 95th percentile risk counters)
+        ext2 = sum([
+            1 if flow_imbalance > 0.80 else 0,
+            1 if ach_ratio > 0.80 else 0,
+            1 if burst_score >= 3 else 0,
+            1 if struct_ratio > 0.05 else 0,
+            1 if cv_out > 1.8 else 0,
+        ])
+        
+        ext3 = sum([
+            1 if flow_imbalance > 0.95 else 0,
+            1 if ach_ratio > 0.90 else 0,
+            1 if burst_score >= 5 else 0,
+            1 if struct_ratio > 0.10 else 0,
+        ])
+        
+        # Ground Truth Label
+        is_laundering = 1 if nid in laundering_nodes else 0
+        
+        record = {
+            "node_id": nid,
+            "in_degree": in_deg,
+            "out_degree": out_deg,
+            "total_degree": tot_deg,
+            "in_degree_ratio": round(in_degree_ratio, 4),
+            "out_degree_ratio": round(out_degree_ratio, 4),
+            "log_total_degree": round(log_tot_deg, 4),
+            "unique_counterparties": tot_cp,
+            "flow_imbalance": round(flow_imbalance, 4),
+            "fan_in_out_ratio": round(min(5.0, fan_ratio), 4),
+            "mean_out_amount": round(mean_out, 2),
+            "std_out_amount": round(std_out, 2),
+            "max_out_amount": round(max_out, 2),
+            "cv_out_amount": round(min(10.0, cv_out), 4),
+            "ach_payment_ratio": round(ach_ratio, 4),
+            "format_entropy": round(fmt_entropy, 4),
+            "high_risk_currency_ratio": round(high_risk_curr_ratio, 4),
+            "structuring_ratio": round(struct_ratio, 4),
+            "burst_score": burst_score,
+            "extreme_feature_count_2": float(ext2),
+            "extreme_feature_count_3": float(ext3),
+            "is_corp": is_corp,
+            "is_sole": is_sole,
+            "is_part": is_part,
+            "is_laundering": is_laundering
+        }
+        records.append(record)
+        
+    return records
+
+
+def export_processed_data(records: list):
+    """
+    Exports clean CSV outputs into data/processed.
+    """
+    os.makedirs(PROCESSED_DIR, exist_ok=True)
+    print(f"[4/5] Exporting engineered node features -> {NODE_OUT} ...")
+    
+    if not records:
+        print("Error: No records generated.")
+        return
+        
+    fieldnames = list(records[0].keys())
+    with open(NODE_OUT, mode="w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(records)
+        
+    pos = sum(1 for r in records if r["is_laundering"] == 1)
+    tot = len(records)
+    print(f"[5/5] Successfully written {tot:,} nodes.")
+    print(f"      Positive (Laundering) nodes: {pos:,} ({pos/tot*100:.3f}%)")
+    print(f"      Negative (Clean) nodes:      {tot-pos:,} ({(tot-pos)/tot*100:.3f}%)")
+
+
+def main():
+    if not os.path.exists(TRANS_CSV):
+        print(f"Error: Required file {TRANS_CSV} does not exist.")
+        sys.exit(1)
+        
+    entity_map = load_accounts_metadata(ACCOUNTS_CSV)
+    
+    (
+        out_amounts, in_amounts, out_receivers, in_senders,
+        out_formats, out_currencies, out_timestamps, laundering_nodes
+    ) = extract_node_and_edge_features(TRANS_CSV, entity_map)
+    
+    records = compute_engineered_records(
+        out_amounts, in_amounts, out_receivers, in_senders,
+        out_formats, out_currencies, out_timestamps, laundering_nodes, entity_map
+    )
+    
+    export_processed_data(records)
+    print("\nFeature engineering for IBM HI-Small dataset completed successfully.")
+
+
+if __name__ == "__main__":
+    main()
