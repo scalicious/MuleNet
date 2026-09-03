@@ -20,3 +20,21 @@ class ExplainabilityEngine:
         "flow_imbalance": "Significant imbalance detected between incoming and outgoing funds.",
         "fan_in_out_ratio": "Account exhibits rapid aggregation or distribution of funds."
     }
+
+    # Dictionary mapping network feature names to human readable sentence templates.
+    NETWORK_DICTIONARY = {
+        "high_neighborhood_density": "Account operates in a tightly clustered transaction network typical of mule rings.",
+        "isolated_node": "Account lacks historical counterparty relationships to establish trust.",
+        "extractor_error": "Unable to fully trace the counterparty network subgraph.",
+        "known_mule_cluster_adjacency": "Directly transacted with accounts previously flagged for mule activity.",
+        "circular_routing_detected": "Funds were traced through a circular path indicative of layering.",
+        "device_sharing_syndicate": "Account shares physical device fingerprints with known bad actors.",
+        "collection_hub_pattern": "Account functions as a central hub collecting funds from multiple sources.",
+        "deep_layering_path": "Transaction forms part of a deep, multi-hop layering chain."
+    }
+    
+    CONTEXT_DICTIONARY = {
+        "high_risk_jurisdiction": "Funds are being routed to or from a historically high-risk jurisdiction.",
+        "unusual_time_of_day": "Transaction executed during hours highly atypical for this account profile.",
+        "velocity_limit_breach": "Account has breached standard volume velocity thresholds for this tier."
+    }
