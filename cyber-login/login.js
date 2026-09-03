@@ -1,11 +1,11 @@
 /* ==========================================================================
-   SENTINEL // THREAT INTELLIGENCE SOC - LOGIN & AUTHENTICATION CONTROLLER
+   DETECT. PROTECT. RESPOND. - LOGIN & AUTHENTICATION CONTROLLER
    Architecture: Frontend JS -> Supabase Auth JS SDK -> Supabase Backend
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Supabase Configuration (Reusing Project Credentials)
+  // Supabase Project Credentials
   const SUPABASE_URL = 'https://jkcgutjknjykqasenwqq.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_PtBOjVSdVe4eKPfBDE8y6g_RUGPzvG6';
 
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const supabaseClient = getSupabaseClient();
 
-  // Target Destination URL after successful authentication
+  // Target Destination URL after successful login
   const DASHBOARD_URL = './dashboard.html';
 
   // DOM Elements
@@ -37,10 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginBtn = document.getElementById('loginBtn');
   const authMessage = document.getElementById('authMessage');
 
-  let isSigningUp = false; // Flag to prevent auto-redirect during multi-step registration or reset
+  let isSigningUp = false;
 
   // --------------------------------------------------------------------------
-  // View Switcher & Title Controller
+  // View Switcher & Simple Title Controller
   // --------------------------------------------------------------------------
   function showActiveView(viewName) {
     if (signInView) signInView.style.display = viewName === 'signIn' ? 'block' : 'none';
@@ -49,19 +49,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (panelTitle && panelSubtitle) {
       if (viewName === 'signIn') {
-        panelTitle.textContent = 'Operator Login';
-        panelSubtitle.textContent = 'Enter authorized credentials to access Threat Intelligence Portal';
+        panelTitle.textContent = 'Sign In';
+        panelSubtitle.textContent = 'Welcome back! Enter your details to continue.';
       } else if (viewName === 'signUp') {
-        panelTitle.textContent = 'Authorization Request';
-        panelSubtitle.textContent = 'Verify email address to register new Security Operator';
+        panelTitle.textContent = 'Sign Up';
+        panelSubtitle.textContent = 'Create a new account with your email address.';
       } else if (viewName === 'forgotPassword') {
-        panelTitle.textContent = 'Clearance Key Recovery';
-        panelSubtitle.textContent = 'Follow identity verification steps to reset clearance key';
+        panelTitle.textContent = 'Reset Password';
+        panelSubtitle.textContent = 'Enter your email address to reset your password.';
       }
     }
   }
 
-  // Navigation Links Event Listeners
+  // Navigation Links
   document.querySelectorAll('#toSignUpBtn, .to-signup-link').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Password Visibility (Eye Icon) Toggle
+  // Password Eye Icon Toggle
   document.querySelectorAll('.eye-toggle-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const wrapper = btn.closest('.password-input-wrapper');
@@ -148,12 +148,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = passwordInput ? passwordInput.value : '';
 
       if (!email || !password) {
-        showMsg(authMessage, 'Please enter both email and clearance key.', 'error');
+        showMsg(authMessage, 'Please enter both email and password.', 'error');
         return;
       }
 
       if (!isValidEmailFormat(email)) {
-        showMsg(authMessage, 'Please enter a valid operator email address.', 'error');
+        showMsg(authMessage, 'Please enter a valid email address.', 'error');
         return;
       }
 
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (loginBtn) {
         loginBtn.disabled = true;
         loginBtn.dataset.originalText = loginBtn.innerHTML;
-        loginBtn.innerHTML = '<span>AUTHENTICATING...</span>';
+        loginBtn.innerHTML = '<span>Signing in...</span>';
       }
 
       try {
@@ -175,22 +175,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (error) {
-          showMsg(authMessage, 'Invalid clearance credentials. Access denied.', 'error');
+          showMsg(authMessage, 'Invalid email or password.', 'error');
           if (loginBtn) {
             loginBtn.disabled = false;
-            loginBtn.innerHTML = loginBtn.dataset.originalText || '<span>AUTHENTICATE OPERATOR</span>';
+            loginBtn.innerHTML = loginBtn.dataset.originalText || '<span>Sign In</span>';
           }
         } else if (data && data.session) {
-          showMsg(authMessage, 'Authentication granted! Accessing SOC portal...', 'success');
+          showMsg(authMessage, 'Sign in successful! Redirecting...', 'success');
           setTimeout(() => {
             window.location.href = DASHBOARD_URL;
           }, 500);
         }
       } catch (err) {
-        showMsg(authMessage, 'Authentication failed due to system exception.', 'error');
+        showMsg(authMessage, 'Invalid email or password.', 'error');
         if (loginBtn) {
           loginBtn.disabled = false;
-          loginBtn.innerHTML = loginBtn.dataset.originalText || '<span>AUTHENTICATE OPERATOR</span>';
+          loginBtn.innerHTML = loginBtn.dataset.originalText || '<span>Sign In</span>';
         }
       }
     });
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
   }
 
-  // STEP 1: Submit Email for Registration OTP
+  // STEP 1: Submit Email for Sign Up OTP
   if (signupEmailForm) {
     signupEmailForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -262,12 +262,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const email = signupEmailInput ? signupEmailInput.value.trim().toLowerCase() : '';
 
       if (!email || !isValidEmailFormat(email)) {
-        showMsg(signupEmailMsg, 'Please enter a valid operator email address.', 'error');
+        showMsg(signupEmailMsg, 'Please enter a valid email address.', 'error');
         return;
       }
 
       if (!supabaseClient) {
-        showMsg(signupEmailMsg, 'Supabase client unavailable. Please try again.', 'error');
+        showMsg(signupEmailMsg, 'Supabase client unavailable. Try again.', 'error');
         return;
       }
 
@@ -276,11 +276,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (sendOtpBtn) {
         sendOtpBtn.disabled = true;
-        sendOtpBtn.innerHTML = '<span>DISPATCHING CODE...</span>';
+        sendOtpBtn.innerHTML = '<span>Sending code...</span>';
       }
 
       try {
-        // Check 1: Query profiles table if available
+        // Check 1: Query profiles table
         try {
           const { data: existingProfile } = await supabaseClient
             .from('profiles')
@@ -289,44 +289,41 @@ document.addEventListener('DOMContentLoaded', () => {
             .maybeSingle();
 
           if (existingProfile) {
-            showMsg(signupEmailMsg, 'An account with this email already exists. Please log in or recover your clearance key.', 'error');
+            showMsg(signupEmailMsg, 'An account with this email already exists. Please sign in or reset your password.', 'error');
             if (sendOtpBtn) {
               sendOtpBtn.disabled = false;
-              sendOtpBtn.innerHTML = '<span>SEND VERIFICATION CODE</span>';
+              sendOtpBtn.innerHTML = '<span>Send Verification Code</span>';
             }
             return;
           }
-        } catch (profileErr) {
-          // Profiles check failed or table doesn't have email column, fallback to Auth check
-        }
+        } catch (profileErr) {}
 
-        // Check 2: Test if user already exists in Supabase Auth
+        // Check 2: Test if user exists in Supabase Auth
         const { error: checkUserError } = await supabaseClient.auth.signInWithOtp({
           email: pendingSignupEmail,
           options: { shouldCreateUser: false }
         });
 
-        // If no error occurred, it means the user ALREADY exists in Supabase Auth!
         if (!checkUserError) {
-          showMsg(signupEmailMsg, 'An account with this email already exists. Please log in or recover your clearance key.', 'error');
+          showMsg(signupEmailMsg, 'An account with this email already exists. Please sign in or reset your password.', 'error');
           if (sendOtpBtn) {
             sendOtpBtn.disabled = false;
-            sendOtpBtn.innerHTML = '<span>SEND VERIFICATION CODE</span>';
+            sendOtpBtn.innerHTML = '<span>Send Verification Code</span>';
           }
           return;
         }
 
-        // User does not exist, proceed to dispatch Sign Up OTP with shouldCreateUser: true
+        // Proceed to dispatch Sign Up OTP
         const { error } = await supabaseClient.auth.signInWithOtp({
           email: pendingSignupEmail,
           options: { shouldCreateUser: true }
         });
 
         if (error) {
-          showMsg(signupEmailMsg, error.message || 'Failed to dispatch verification code.', 'error');
+          showMsg(signupEmailMsg, error.message || 'Failed to send verification code.', 'error');
           if (sendOtpBtn) {
             sendOtpBtn.disabled = false;
-            sendOtpBtn.innerHTML = '<span>SEND VERIFICATION CODE</span>';
+            sendOtpBtn.innerHTML = '<span>Send Verification Code</span>';
           }
         } else {
           if (displayTargetEmail) displayTargetEmail.textContent = pendingSignupEmail;
@@ -340,13 +337,13 @@ document.addEventListener('DOMContentLoaded', () => {
         showMsg(signupEmailMsg, 'Failed to send verification code. Try again.', 'error');
         if (sendOtpBtn) {
           sendOtpBtn.disabled = false;
-          sendOtpBtn.innerHTML = '<span>SEND VERIFICATION CODE</span>';
+          sendOtpBtn.innerHTML = '<span>Send Verification Code</span>';
         }
       }
     });
   }
 
-  // Change Email Link during Registration
+  // Change Email Link
   if (changeEmailBtn) {
     changeEmailBtn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -355,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (signupStep1) signupStep1.style.display = 'block';
       if (sendOtpBtn) {
         sendOtpBtn.disabled = false;
-        sendOtpBtn.innerHTML = '<span>SEND VERIFICATION CODE</span>';
+        sendOtpBtn.innerHTML = '<span>Send Verification Code</span>';
       }
     });
   }
@@ -376,12 +373,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (error) {
-          showMsg(otpMsg, 'Failed to resend code. Please try again.', 'error');
+          showMsg(otpMsg, 'Failed to resend code. Try again.', 'error');
         } else {
-          showMsg(otpMsg, 'New OTP verification code dispatched.', 'success');
+          showMsg(otpMsg, 'New verification code sent.', 'success');
         }
       } catch (err) {
-        showMsg(otpMsg, 'Failed to resend code. Please try again.', 'error');
+        showMsg(otpMsg, 'Failed to resend code. Try again.', 'error');
       }
     });
   }
@@ -395,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const code = otpInput ? otpInput.value.trim() : '';
 
       if (!code || code.length < 6) {
-        showMsg(otpMsg, 'Please enter a valid 6-digit OTP code.', 'error');
+        showMsg(otpMsg, 'Please enter a valid 6-digit code.', 'error');
         return;
       }
 
@@ -406,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (verifyOtpBtn) {
         verifyOtpBtn.disabled = true;
-        verifyOtpBtn.innerHTML = '<span>VERIFYING CODE...</span>';
+        verifyOtpBtn.innerHTML = '<span>Verifying code...</span>';
       }
 
       try {
@@ -417,10 +414,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (error || !data.session) {
-          showMsg(otpMsg, 'Invalid or expired verification code.', 'error');
+          showMsg(otpMsg, 'Invalid or expired code.', 'error');
           if (verifyOtpBtn) {
             verifyOtpBtn.disabled = false;
-            verifyOtpBtn.innerHTML = '<span>VERIFY SECURITY CODE</span>';
+            verifyOtpBtn.innerHTML = '<span>Verify Code</span>';
           }
         } else {
           isSigningUp = true;
@@ -432,13 +429,13 @@ document.addEventListener('DOMContentLoaded', () => {
         showMsg(otpMsg, 'Verification failed. Try again.', 'error');
         if (verifyOtpBtn) {
           verifyOtpBtn.disabled = false;
-          verifyOtpBtn.innerHTML = '<span>VERIFY SECURITY CODE</span>';
+          verifyOtpBtn.innerHTML = '<span>Verify Code</span>';
         }
       }
     });
   }
 
-  // STEP 3: Password Creation
+  // STEP 3: Create Password
   if (createPasswordForm) {
     createPasswordForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -453,12 +450,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (pass.length < 6) {
-        showMsg(passwordMsg, 'Clearance key must be at least 6 characters.', 'error');
+        showMsg(passwordMsg, 'Password must be at least 6 characters.', 'error');
         return;
       }
 
       if (pass !== confirmPass) {
-        showMsg(passwordMsg, 'Clearance keys do not match.', 'error');
+        showMsg(passwordMsg, 'Passwords do not match.', 'error');
         return;
       }
 
@@ -469,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (createAccountBtn) {
         createAccountBtn.disabled = true;
-        createAccountBtn.innerHTML = '<span>INITIALIZING OPERATOR...</span>';
+        createAccountBtn.innerHTML = '<span>Creating account...</span>';
       }
 
       try {
@@ -479,20 +476,20 @@ document.addEventListener('DOMContentLoaded', () => {
           showMsg(passwordMsg, error.message || 'Failed to create password.', 'error');
           if (createAccountBtn) {
             createAccountBtn.disabled = false;
-            createAccountBtn.innerHTML = '<span>FINALIZE AUTHORIZATION</span>';
+            createAccountBtn.innerHTML = '<span>Create Account</span>';
           }
         } else {
           isSigningUp = false;
-          showMsg(passwordMsg, 'Operator authorized successfully! Accessing portal...', 'success');
+          showMsg(passwordMsg, 'Account created successfully! Redirecting...', 'success');
           setTimeout(() => {
             window.location.href = DASHBOARD_URL;
           }, 500);
         }
       } catch (err) {
-        showMsg(passwordMsg, 'Account setup failed. Try again.', 'error');
+        showMsg(passwordMsg, 'Account creation failed. Try again.', 'error');
         if (createAccountBtn) {
           createAccountBtn.disabled = false;
-          createAccountBtn.innerHTML = '<span>FINALIZE AUTHORIZATION</span>';
+          createAccountBtn.innerHTML = '<span>Create Account</span>';
         }
       }
     });
@@ -558,7 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const email = forgotEmailInput ? forgotEmailInput.value.trim().toLowerCase() : '';
 
       if (!email || !isValidEmailFormat(email)) {
-        showMsg(forgotEmailMsg, 'Please enter a valid operator email address.', 'error');
+        showMsg(forgotEmailMsg, 'Please enter a valid email address.', 'error');
         return;
       }
 
@@ -572,13 +569,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (sendForgotOtpBtn) {
         sendForgotOtpBtn.disabled = true;
-        sendForgotForgotBtnText('DISPATCHING RECOVERY CODE...');
+        sendForgotForgotBtnText('Sending code...');
       }
 
       try {
         let sendError = null;
 
-        // Attempt 1: Try OTP recovery with shouldCreateUser: false
         const { error: otpError } = await supabaseClient.auth.signInWithOtp({
           email: pendingForgotEmail,
           options: { shouldCreateUser: false }
@@ -586,7 +582,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sendError = otpError;
 
-        // Attempt 2: Fallback to resetPasswordForEmail if OTP recovery returned error
         if (sendError) {
           const { error: resetError } = await supabaseClient.auth.resetPasswordForEmail(pendingForgotEmail);
           if (!resetError) {
@@ -598,7 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
           showMsg(forgotEmailMsg, sendError.message || 'No account found matching this email address.', 'error');
           if (sendForgotOtpBtn) {
             sendForgotOtpBtn.disabled = false;
-            sendForgotForgotBtnText('SEND RECOVERY CODE');
+            sendForgotForgotBtnText('Send Reset Code');
           }
         } else {
           if (displayForgotTargetEmail) displayForgotTargetEmail.textContent = pendingForgotEmail;
@@ -611,16 +606,15 @@ document.addEventListener('DOMContentLoaded', () => {
           startForgotResendCooldown();
         }
       } catch (err) {
-        showMsg(forgotEmailMsg, err.message || 'Failed to dispatch recovery code.', 'error');
+        showMsg(forgotEmailMsg, err.message || 'Failed to send reset code.', 'error');
         if (sendForgotOtpBtn) {
           sendForgotOtpBtn.disabled = false;
-          sendForgotForgotBtnText('SEND RECOVERY CODE');
+          sendForgotForgotBtnText('Send Reset Code');
         }
       }
     });
   }
 
-  // Resend Recovery OTP Handler
   if (resendForgotOtpBtn) {
     resendForgotOtpBtn.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -636,12 +630,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (error) {
-          showMsg(forgotOtpMsg, 'Failed to resend recovery code.', 'error');
+          showMsg(forgotOtpMsg, 'Failed to resend reset code.', 'error');
         } else {
-          showMsg(forgotOtpMsg, 'New recovery OTP code dispatched.', 'success');
+          showMsg(forgotOtpMsg, 'New reset code sent.', 'success');
         }
       } catch (err) {
-        showMsg(forgotOtpMsg, 'Failed to resend recovery code.', 'error');
+        showMsg(forgotOtpMsg, 'Failed to resend reset code.', 'error');
       }
     });
   }
@@ -658,7 +652,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const code = forgotOtpInput ? forgotOtpInput.value.trim() : '';
 
       if (!code || code.length < 6) {
-        showMsg(forgotOtpMsg, 'Please enter a valid 6-digit OTP code.', 'error');
+        showMsg(forgotOtpMsg, 'Please enter a valid 6-digit code.', 'error');
         return;
       }
 
@@ -669,7 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (verifyForgotOtpBtn) {
         verifyForgotOtpBtn.disabled = true;
-        verifyForgotOtpBtn.innerHTML = '<span>VERIFYING CODE...</span>';
+        verifyForgotOtpBtn.innerHTML = '<span>Verifying code...</span>';
       }
 
       try {
@@ -680,10 +674,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (error || !data.session) {
-          showMsg(forgotOtpMsg, 'Invalid or expired recovery code.', 'error');
+          showMsg(forgotOtpMsg, 'Invalid or expired code.', 'error');
           if (verifyForgotOtpBtn) {
             verifyForgotOtpBtn.disabled = false;
-            verifyForgotOtpBtn.innerHTML = '<span>VERIFY RECOVERY CODE</span>';
+            verifyForgotOtpBtn.innerHTML = '<span>Verify Code</span>';
           }
         } else {
           isSigningUp = true;
@@ -694,10 +688,10 @@ document.addEventListener('DOMContentLoaded', () => {
           clearMsg(resetPasswordMsg);
         }
       } catch (err) {
-        showMsg(forgotOtpMsg, 'Recovery code verification failed.', 'error');
+        showMsg(forgotOtpMsg, 'Verification failed. Try again.', 'error');
         if (verifyForgotOtpBtn) {
           verifyForgotOtpBtn.disabled = false;
-          verifyForgotOtpBtn.innerHTML = '<span>VERIFY RECOVERY CODE</span>';
+          verifyForgotOtpBtn.innerHTML = '<span>Verify Code</span>';
         }
       }
     });
@@ -717,12 +711,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (pass.length < 6) {
-        showMsg(resetPasswordMsg, 'Clearance key must be at least 6 characters.', 'error');
+        showMsg(resetPasswordMsg, 'Password must be at least 6 characters.', 'error');
         return;
       }
 
       if (pass !== confirmPass) {
-        showMsg(resetPasswordMsg, 'Clearance keys do not match.', 'error');
+        showMsg(resetPasswordMsg, 'Passwords do not match.', 'error');
         return;
       }
 
@@ -733,33 +727,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (saveNewPasswordBtn) {
         saveNewPasswordBtn.disabled = true;
-        saveNewPasswordBtn.innerHTML = '<span>UPDATING KEY...</span>';
+        saveNewPasswordBtn.innerHTML = '<span>Saving password...</span>';
       }
 
       try {
         const { error } = await supabaseClient.auth.updateUser({ password: pass });
 
         if (error) {
-          showMsg(resetPasswordMsg, error.message || 'Failed to update clearance key.', 'error');
+          showMsg(resetPasswordMsg, error.message || 'Failed to update password.', 'error');
           if (saveNewPasswordBtn) {
             saveNewPasswordBtn.disabled = false;
-            saveNewPasswordBtn.innerHTML = '<span>UPDATE CLEARANCE KEY</span>';
+            saveNewPasswordBtn.innerHTML = '<span>Save Password</span>';
           }
         } else {
           isSigningUp = false;
           await supabaseClient.auth.signOut();
-          showMsg(resetPasswordMsg, 'Clearance key updated! Redirecting to login...', 'success');
+          showMsg(resetPasswordMsg, 'Password updated! Redirecting to Sign In...', 'success');
           setTimeout(() => {
             showActiveView('signIn');
             if (emailInput) emailInput.value = pendingForgotEmail;
-            showMsg(authMessage, 'Clearance key updated successfully. Please log in.', 'success');
+            showMsg(authMessage, 'Password updated successfully. Please sign in.', 'success');
           }, 1200);
         }
       } catch (err) {
-        showMsg(resetPasswordMsg, 'Failed to update clearance key.', 'error');
+        showMsg(resetPasswordMsg, 'Failed to update password.', 'error');
         if (saveNewPasswordBtn) {
           saveNewPasswordBtn.disabled = false;
-          saveNewPasswordBtn.innerHTML = '<span>UPDATE CLEARANCE KEY</span>';
+          saveNewPasswordBtn.innerHTML = '<span>Save Password</span>';
         }
       }
     });
