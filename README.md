@@ -117,4 +117,4 @@ python scripts/train_ibm_models.py
 * **ML (GNN):** PyG GAT model, Graph Attention weights, Subgraph extractor, Ring detectors.
 * **ML (Sequence):** Tabular feature extraction, Sequence XGBoost, Isolation Forest, SHAP integration.
 * **Backend Core:** FastAPI framework, In-memory NetworkX engine, Causal scoring pipeline.
-* **Backend Forensics:** Typology detectors, Live Metrics engine, Replay streaming
+* **Backend Forensics:** Typology detectors, Live Metrics engine, Replay streaming.
