@@ -153,3 +153,93 @@ class SequenceRiskEngine:
 
         # ----------------------------------------------------------------
         # 1. Setup-to-action gap (minutes)
+        #    Last credential/payee change event before this action.
+        #    Short gaps (<5 min) are the strongest ATO indicator.
+        # ----------------------------------------------------------------
+        SETUP_EVENT_TYPES = {
+            "mobile_number_change", "email_change", "payee_added",
+            "password_reset", "address_change", "beneficiary_added"
+        }
+        setup_gap_minutes = 9999.0
+        for ev in reversed(prior_events):
+            if ev.get("event_type") in SETUP_EVENT_TYPES:
+                ev_dt = CausalFilter.parse_iso(ev["timestamp"])
+                diff  = (as_of_dt - ev_dt).total_seconds() / 60.0
+                if diff >= 0:
+                    setup_gap_minutes = min(setup_gap_minutes, diff)
+                    break
+
+        # ----------------------------------------------------------------
+        # 2. Login velocity — 1h and 24h session storm indicators
+        # ----------------------------------------------------------------
+        logins_1h  = 0
+        logins_24h = 0
+        for ev in prior_events:
+            if ev.get("event_type") in ("login", "new_device_login"):
+                ev_dt = CausalFilter.parse_iso(ev["timestamp"])
+                secs  = (as_of_dt - ev_dt).total_seconds()
+                if 0 <= secs <= 3600:
+                    logins_1h  += 1
+                if 0 <= secs <= 86400:
+                    logins_24h += 1
+
+        # ----------------------------------------------------------------
+        # 3. New device flag — unrecognised device in 1h window
+        # ----------------------------------------------------------------
+        new_device_flag = float(any(
+            ev.get("event_type") == "new_device_login"
+            for ev in prior_events
+            if (as_of_dt - CausalFilter.parse_iso(ev["timestamp"])).total_seconds() <= 3600
+        ))
+
+        # ----------------------------------------------------------------
+        # 4. Payee added in session — same-session payee-add before transfer
+        # ----------------------------------------------------------------
+        payee_added_flag = float(any(
+            ev.get("event_type") == "payee_added"
+            for ev in prior_events
+            if (as_of_dt - CausalFilter.parse_iso(ev["timestamp"])).total_seconds() <= 1800
+        ))
+
+        # ----------------------------------------------------------------
+        # 5. Amount z-score vs account history
+        #    Cold-start (< 3 prior txns): use absolute amount thresholds
+        # ----------------------------------------------------------------
+        prior_amounts = [t.get("amount", 0.0) for t in prior_txns]
+        if len(prior_amounts) >= 3:
+            mean_amt      = float(np.mean(prior_amounts))
+            std_amt       = float(np.std(prior_amounts)) + 1e-5
+            amount_zscore = float((amount - mean_amt) / std_amt)
+        else:
+            # Cold-start absolute threshold ladder
+            if amount > 50000:
+                amount_zscore = 4.0
+            elif amount > 25000:
+                amount_zscore = 2.8
+            elif amount > 10000:
+                amount_zscore = 1.5
+            else:
+                amount_zscore = 0.5
+        amount_zscore = max(0.0, amount_zscore)
+
+        # ----------------------------------------------------------------
+        # 6. Dormancy flag — >30 day gap before this transaction
+        # ----------------------------------------------------------------
+        dormancy_flag = 0.0
+        if prior_txns:
+            latest_dt = max(CausalFilter.parse_iso(t["timestamp"]) for t in prior_txns)
+            if (as_of_dt - latest_dt).total_seconds() > 30 * 86400:
+                dormancy_flag = 1.0
+        else:
+            dormancy_flag = 1.0  # no prior txns = cold-start = effectively dormant
+
+        # ----------------------------------------------------------------
+        # 7. Flow imbalance — asymmetric in/out cash flow
+        # ----------------------------------------------------------------
+        inflows  = sum(t.get("amount", 0.0) for t in prior_txns if t.get("receiver_id") == account_id)
+        outflows = sum(t.get("amount", 0.0) for t in prior_txns if t.get("sender_id") == account_id) + amount
+        flow_imbalance = abs(inflows - outflows) / max(1.0, inflows + outflows)
+
+        # ----------------------------------------------------------------
+        # 8. Degree-based graph features
+        # ----------------------------------------------------------------
