@@ -548,13 +548,26 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        const { error } = await supabaseClient.auth.signInWithOtp({
+        let sendError = null;
+
+        // Attempt 1: Try OTP recovery with shouldCreateUser: false
+        const { error: otpError } = await supabaseClient.auth.signInWithOtp({
           email: pendingForgotEmail,
           options: { shouldCreateUser: false }
         });
 
-        if (error) {
-          showMsg(forgotEmailMsg, 'No account found matching this email address.', 'error');
+        sendError = otpError;
+
+        // Attempt 2: Fallback to resetPasswordForEmail if OTP recovery returned error
+        if (sendError) {
+          const { error: resetError } = await supabaseClient.auth.resetPasswordForEmail(pendingForgotEmail);
+          if (!resetError) {
+            sendError = null;
+          }
+        }
+
+        if (sendError) {
+          showMsg(forgotEmailMsg, sendError.message || 'No account found matching this email address.', 'error');
           if (sendForgotOtpBtn) {
             sendForgotOtpBtn.disabled = false;
             sendForgotForgotBtnText('SEND RECOVERY CODE');
@@ -569,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
           clearMsg(forgotOtpMsg);
         }
       } catch (err) {
-        showMsg(forgotEmailMsg, 'Failed to dispatch recovery code.', 'error');
+        showMsg(forgotEmailMsg, err.message || 'Failed to dispatch recovery code.', 'error');
         if (sendForgotOtpBtn) {
           sendForgotOtpBtn.disabled = false;
           sendForgotForgotBtnText('SEND RECOVERY CODE');
