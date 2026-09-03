@@ -1,147 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Activity, ShieldAlert, Radio, AlertOctagon } from 'lucide-react';
-import { Transaction, RiskTier, EnforcementStatus } from '../types/risk';
+import React, { useMemo } from 'react';
+import { Radio, AlertOctagon } from 'lucide-react';
+import { Transaction } from '../types/risk';
 import TransactionRow from './TransactionRow';
-
-const MAX_VISIBLE_TRANSACTIONS = 10;
-
-const INITIAL_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'TXN-10482',
-    timestamp: '12:42:18',
-    sender: 'ACC-1042',
-    receiver: 'ACC-8821',
-    amount: 84920,
-    currency: 'USD',
-    riskScore: 94,
-    riskTier: 'CRITICAL',
-    status: 'BLOCKED',
-  },
-  {
-    id: 'TXN-10481',
-    timestamp: '12:41:52',
-    sender: 'ACC-2931',
-    receiver: 'ACC-7734',
-    amount: 18200,
-    currency: 'USD',
-    riskScore: 78,
-    riskTier: 'HIGH',
-    status: 'CHALLENGED',
-  },
-  {
-    id: 'TXN-10480',
-    timestamp: '12:41:20',
-    sender: 'ACC-8821',
-    receiver: 'ACC-9012',
-    amount: 3100,
-    currency: 'USD',
-    riskScore: 48,
-    riskTier: 'MEDIUM',
-    status: 'FLAGGED',
-  },
-  {
-    id: 'TXN-10479',
-    timestamp: '12:40:58',
-    sender: 'ACC-1022',
-    receiver: 'ACC-2931',
-    amount: 820,
-    currency: 'USD',
-    riskScore: 12,
-    riskTier: 'LOW',
-    status: 'ALLOWED',
-  },
-  {
-    id: 'TXN-10478',
-    timestamp: '12:40:31',
-    sender: 'ACC-5419',
-    receiver: 'ACC-3820',
-    amount: 42500,
-    currency: 'USD',
-    riskScore: 82,
-    riskTier: 'HIGH',
-    status: 'CHALLENGED',
-  },
-  {
-    id: 'TXN-10477',
-    timestamp: '12:40:05',
-    sender: 'ACC-6105',
-    receiver: 'ACC-1042',
-    amount: 129400,
-    currency: 'USD',
-    riskScore: 96,
-    riskTier: 'CRITICAL',
-    status: 'BLOCKED',
-  },
-  {
-    id: 'TXN-10476',
-    timestamp: '12:39:44',
-    sender: 'ACC-4491',
-    receiver: 'ACC-5419',
-    amount: 1450,
-    currency: 'USD',
-    riskScore: 18,
-    riskTier: 'LOW',
-    status: 'ALLOWED',
-  },
-  {
-    id: 'TXN-10475',
-    timestamp: '12:39:12',
-    sender: 'ACC-7734',
-    receiver: 'ACC-6105',
-    amount: 9800,
-    currency: 'USD',
-    riskScore: 54,
-    riskTier: 'MEDIUM',
-    status: 'FLAGGED',
-  },
-];
-
-const MOCK_ACCOUNTS = [
-  'ACC-1042', 'ACC-8821', 'ACC-2931', 'ACC-7734', 'ACC-9012',
-  'ACC-1022', 'ACC-5419', 'ACC-3820', 'ACC-6105', 'ACC-4491',
-  'ACC-9204', 'ACC-3140', 'ACC-7218', 'ACC-5093'
-];
-
-const MOCK_AMOUNTS = [720, 1450, 3100, 8900, 18200, 24600, 42500, 84920, 129400, 245000];
-
-const RISK_PRESETS: Array<{ score: number; tier: RiskTier; status: EnforcementStatus }> = [
-  { score: 12, tier: 'LOW', status: 'ALLOWED' },
-  { score: 24, tier: 'LOW', status: 'ALLOWED' },
-  { score: 48, tier: 'MEDIUM', status: 'FLAGGED' },
-  { score: 58, tier: 'MEDIUM', status: 'FLAGGED' },
-  { score: 79, tier: 'HIGH', status: 'CHALLENGED' },
-  { score: 86, tier: 'HIGH', status: 'CHALLENGED' },
-  { score: 96, tier: 'CRITICAL', status: 'BLOCKED' },
-];
-
-function generateMockTransaction(): Transaction {
-  const now = new Date();
-  const time = now.toTimeString().split(' ')[0];
-
-  const senderIdx = Math.floor(Math.random() * MOCK_ACCOUNTS.length);
-  let receiverIdx = Math.floor(Math.random() * MOCK_ACCOUNTS.length);
-  while (receiverIdx === senderIdx) {
-    receiverIdx = Math.floor(Math.random() * MOCK_ACCOUNTS.length);
-  }
-
-  const sender = MOCK_ACCOUNTS[senderIdx];
-  const receiver = MOCK_ACCOUNTS[receiverIdx];
-  const amount = MOCK_AMOUNTS[Math.floor(Math.random() * MOCK_AMOUNTS.length)];
-  const preset = RISK_PRESETS[Math.floor(Math.random() * RISK_PRESETS.length)];
-
-  return {
-    id: `TXN-${Math.floor(10000 + Math.random() * 90000)}`,
-    timestamp: time,
-    sender,
-    receiver,
-    amount,
-    currency: 'USD',
-    riskScore: preset.score,
-    riskTier: preset.tier,
-    status: preset.status,
-    isNew: true,
-  };
-}
+import { useTransactionStream } from '../hooks/useTransactionStream';
 
 export interface LiveTransactionFeedProps {
   selectedTxn?: Transaction | null;
@@ -152,41 +13,27 @@ export default function LiveTransactionFeed({
   selectedTxn,
   onSelectTxn,
 }: LiveTransactionFeedProps) {
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
-  const [internalSelectedTxn, setInternalSelectedTxn] = useState<Transaction | null>(null);
-  const [totalEvaluatedCount, setTotalEvaluatedCount] = useState<number>(INITIAL_TRANSACTIONS.length);
+  // Use hook layer for stream lifecycle & fallback resilience
+  const { transactions, eventCount } = useTransactionStream({ maxItems: 10 });
 
-  // Active selection either from parent prop or internal state
-  const activeSelected = selectedTxn !== undefined ? selectedTxn : internalSelectedTxn;
+  const activeSelected = selectedTxn;
 
   const handleSelect = (tx: Transaction) => {
-    setInternalSelectedTxn(tx);
     if (onSelectTxn) {
       onSelectTxn(tx);
     }
   };
 
-  // Pre-Commitment Bounded Stream Generator (3.5s cycle)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const newTx = generateMockTransaction();
-      setTransactions((prev) => [newTx, ...prev.slice(0, MAX_VISIBLE_TRANSACTIONS - 1)]);
-      setTotalEvaluatedCount((prev) => prev + 1);
-    }, 3500);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Critical alerts count in current window
+  // Critical alerts count in current visible stream window
   const criticalCount = useMemo(
     () => transactions.filter((t) => t.riskTier === 'CRITICAL').length,
     [transactions]
   );
 
   return (
-    <div className="w-full bg-[#0d131f] border border-[#1f293d] rounded-lg overflow-hidden flex flex-col shadow-sm">
+    <div className="w-full h-full bg-[#0d131f] border border-[#1f293d] rounded-lg overflow-hidden flex flex-col shadow-sm">
       {/* Header Area */}
-      <div className="px-4 sm:px-6 py-4 border-b border-[#1f293d] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0b0f17]/70">
+      <div className="px-4 sm:px-6 py-4 border-b border-[#1f293d] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0b0f17]/70 shrink-0">
         {/* Title & Live Status */}
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 rounded-lg bg-cyan-950/50 border border-cyan-800/40 flex items-center justify-center text-cyan-400 shrink-0">
@@ -243,7 +90,7 @@ export default function LiveTransactionFeed({
 
           {/* Event Count */}
           <div className="px-2.5 py-1 rounded border border-slate-800 bg-slate-900/80 text-slate-300 text-[11px] font-mono">
-            <span className="font-semibold text-slate-200">{totalEvaluatedCount}</span>
+            <span className="font-semibold text-slate-200">{eventCount}</span>
             <span className="text-slate-500 ml-1">Evaluated</span>
             <span className="text-slate-500 ml-1.5 font-normal">({transactions.length} Stream Buffer)</span>
           </div>
@@ -251,7 +98,7 @@ export default function LiveTransactionFeed({
       </div>
 
       {/* Column Headers for High Readability */}
-      <div className="hidden md:flex items-center justify-between px-6 py-2 bg-[#090d15] border-b border-[#1f293d]/80 text-[11px] font-mono uppercase tracking-wider text-slate-400 select-none">
+      <div className="hidden md:flex items-center justify-between px-6 py-2 bg-[#090d15] border-b border-[#1f293d]/80 text-[11px] font-mono uppercase tracking-wider text-slate-400 select-none shrink-0">
         <div className="flex items-center space-x-5">
           <span className="w-20">Time (UTC)</span>
           <span className="w-24">Transaction</span>
@@ -267,7 +114,7 @@ export default function LiveTransactionFeed({
       </div>
 
       {/* Bounded Transaction Rows List */}
-      <div className="divide-y divide-[#1f293d]/70 overflow-x-auto">
+      <div className="divide-y divide-[#1f293d]/70 overflow-x-auto flex-1">
         {transactions.map((tx, idx) => (
           <TransactionRow
             key={tx.id}
