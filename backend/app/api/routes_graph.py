@@ -16,6 +16,7 @@ async def get_ego_graph(account_id: str, hops: int = 2):
     # Queries in-memory graph for 1-2 hop neighborhood.
     # TO BE IMPLEMENTED: Attach GAT attention scores to edges dynamically.
     # ---------------------------------------------------------
+    logger.info(f"Extracting {hops}-hop ego graph for {account_id}")
     ego_data = memory_graph.get_ego_subgraph(account_id=account_id, as_of_timestamp="", hops=hops)
     
     # Placeholder: GAT attention coefficients to be injected here by Person 2
