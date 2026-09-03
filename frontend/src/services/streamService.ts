@@ -72,9 +72,10 @@ export function connectTransactionStream(
   const startFallback = () => {
     if (fallbackInterval || isClosed) return;
     fallbackInterval = setInterval(() => {
-      if (!isClosed) {
-        onTransaction(generateMockStreamTransaction());
-      }
+      // Disabled mock fallback: we want to rely entirely on the backend
+      // if (!isClosed) {
+      //   onTransaction(generateMockStreamTransaction());
+      // }
     }, 3000);
   };
 

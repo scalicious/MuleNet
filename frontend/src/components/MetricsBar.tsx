@@ -18,12 +18,12 @@ interface BackendMetrics {
 
 export default function MetricsBar() {
   const [metrics, setMetrics] = useState<BackendMetrics>({
-    prevented_loss_value: 93500.0,
-    detection_lead_time_minutes: 14.4,
-    false_challenge_rate_percent: 25.0,
-    mule_ring_coverage_percent: 95.0,
-    total_scored_actions: 4,
-    flagged_critical_count: 2,
+    prevented_loss_value: 0,
+    detection_lead_time_minutes: 0,
+    false_challenge_rate_percent: 0,
+    mule_ring_coverage_percent: 0,
+    total_scored_actions: 0,
+    flagged_critical_count: 0,
   });
   const [isLiveActive, setIsLiveActive] = useState<boolean>(false);
 
@@ -77,7 +77,7 @@ export default function MetricsBar() {
       id: 'lead-time',
       label: 'Lead Time',
       value: `${metrics.detection_lead_time_minutes.toFixed(1)} min`,
-      change: '+14.2 min',
+      change: `+${metrics.detection_lead_time_minutes.toFixed(1)} min`,
       changeType: 'positive',
       subtext: 'Pre-execution detection window',
       icon: Clock,
@@ -99,7 +99,7 @@ export default function MetricsBar() {
       id: 'ring-coverage',
       label: 'Ring Coverage',
       value: `${metrics.mule_ring_coverage_percent.toFixed(1)}%`,
-      change: '+95%',
+      change: `+${metrics.mule_ring_coverage_percent.toFixed(0)}%`,
       changeType: 'positive',
       subtext: 'Syndicate mule graphs mapped',
       icon: Network,

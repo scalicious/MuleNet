@@ -1,4 +1,7 @@
-import asyncio
+import os
+
+with open("backend/app/services/demo_runner.py", "w") as f:
+    f.write("""import asyncio
 import json
 import csv
 import random
@@ -18,7 +21,7 @@ class DemoRunner:
         self._load_csv()
 
     def _load_csv(self):
-        csv_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "processed", "ibm_trans_test.csv")
+        csv_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "data", "processed", "ibm_trans_test.csv")
         if not os.path.exists(csv_path):
             logger.warning(f"CSV not found at {csv_path}")
             return
@@ -115,3 +118,4 @@ class DemoRunner:
             pass
 
 demo_runner = DemoRunner()
+""")

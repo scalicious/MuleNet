@@ -358,6 +358,13 @@ export default function GraphExplorer({
       const radius = isFocused ? baseRadius + 3.5 : isHovered ? baseRadius + 1.8 : baseRadius;
 
       ctx.save();
+
+      // Guard: skip drawing if coordinates not yet computed by force sim
+      if (!isFinite(node.x) || !isFinite(node.y)) {
+        ctx.restore();
+        return;
+      }
+
       ctx.globalAlpha = isDimmed ? 0.12 : 1;
 
       // 1. Soft Outer Ambient Glow
