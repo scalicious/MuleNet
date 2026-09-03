@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Sign In // Security Portal</title>
+  <meta name="description" content="One Platform. Total Protection. Admin Portal Login">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="login.css">
+  
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Custom Background Image bg.jpg -->
+  <div class="cyber-bg"></div>
+
+  <!-- Top Banner Header -->
+  <header class="top-header-bar">
+    <div class="top-pill-banner">
+      <span class="top-pill-dots">:::::::::::::::::</span>
+      <span>ONE PLATFORM. TOTAL PROTECTION.</span>
+      <span class="top-pill-dots">:::::::::::::::::</span>
+    </div>
+  </header>
+
+  <!-- Centered Main Page Layout -->
+  <main class="auth-wrapper">
+    
+    <!-- Hero Headline Header in Middle -->
+    <div class="hero-text-container">
+      <div class="corner-bracket tl"></div>
+      <div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div>
+      <div class="corner-bracket br"></div>
+      <h1 class="hero-text-heading">
+        ADMIN <span class="hero-text-bullet">&bull;</span> ACCESS <span class="hero-text-bullet">&bull;</span> PORTAL
+      </h1>
+      <div class="hero-dotted-underline"></div>
+    </div>
+
+    <!-- Centered Admin Login Box Container -->
+    <div class="security-panel">
+      
+      <!-- White Corner Crop Brackets matching [ ┌ ┐ └ ┘ ] -->
+      <div class="corner-bracket tl"></div>
+      <div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div>
+      <div class="corner-bracket br"></div>
+
+      <!-- Panel Header & Title -->
+      <div class="panel-header">
+        <h2 class="panel-title" id="panelTitle">Admin Sign In</h2>
+        <p class="panel-subtitle" id="panelSubtitle">Enter authorized administrator credentials to access system controls.</p>
+      </div>
+
+      <!-- Admin Sign In Form -->
+      <form class="auth-form" id="adminLoginForm" novalidate>
+        
+        <!-- Message Container -->
+        <div class="auth-message" id="adminAuthMessage" role="alert"></div>
+
+        <!-- Admin Email Input -->
+        <div class="form-group">
+          <label class="form-label" for="adminEmail">Admin Email Address</label>
+          <div class="input-container">
+            <input type="email" id="adminEmail" class="cyber-input" placeholder="admin@example.com" autocomplete="email" required>
+          </div>
+        </div>
+
+        <!-- Admin Password Input -->
+        <div class="form-group">
+          <label class="form-label" for="adminPassword">Enter Password</label>
+          <div class="input-container password-input-wrapper">
+            <input type="password" id="adminPassword" class="cyber-input" placeholder="Enter admin password" autocomplete="current-password" required>
+            <button type="button" class="eye-toggle-btn" aria-label="Toggle password visibility">
+              <svg viewBox="0 0 24 24">
+                <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle class="eye-pupil" cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Options: Remember Me & Forgot Password -->
+        <div class="form-options">
+          <label class="checkbox-container">
+            <input type="checkbox" id="rememberAdmin" class="cyber-checkbox">
+            <span>Remember Me</span>
+          </label>
+          <a href="#" class="cyber-link" id="adminForgotBtn">Forgot Password?</a>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="cyber-btn" id="adminLoginBtn" style="background: linear-gradient(135deg, #2563eb, #06b6d4);">
+          <span>Sign In as Admin</span>
+        </button>
+      </form>
+
+      <!-- Panel Footer -->
+      <div class="panel-footer">
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+          Note: Admin emails must be pre-authorized in Supabase.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Return to Portal Selection Link -->
+    <div style="margin-top: 20px; font-size: 13px;">
+      <a href="index.html" class="cyber-link" style="opacity: 0.8;">&larr; Return to Portal Selection</a>
+    </div>
+  </main>
+
+  <!-- Admin Controller Script -->
+  <script src="admin.js"></script>
+</body>
+</html>

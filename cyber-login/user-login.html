@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In // Security Portal</title>
+  <meta name="description" content="One Platform. Total Protection. Login Portal">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="login.css">
+  
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Custom Background Image bg.jpg -->
+  <div class="cyber-bg"></div>
+
+  <!-- Top Banner Header -->
+  <header class="top-header-bar">
+    <div class="top-pill-banner">
+      <span class="top-pill-dots">:::::::::::::::::</span>
+      <span>ONE PLATFORM. TOTAL PROTECTION.</span>
+      <span class="top-pill-dots">:::::::::::::::::</span>
+    </div>
+  </header>
+
+  <!-- Centered Main Page Layout -->
+  <main class="auth-wrapper">
+    
+    <!-- Hero Headline Header in Middle -->
+    <div class="hero-text-container">
+      <div class="corner-bracket tl"></div>
+      <div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div>
+      <div class="corner-bracket br"></div>
+      <h1 class="hero-text-heading">
+        DETECT <span class="hero-text-bullet">&bull;</span> PROTECT <span class="hero-text-bullet">&bull;</span> RESPOND
+      </h1>
+      <div class="hero-dotted-underline"></div>
+    </div>
+
+    <!-- Centered Login Box Container -->
+    <div class="security-panel">
+      
+      <!-- White Corner Crop Brackets matching [ ┌ ┐ └ ┘ ] -->
+      <div class="corner-bracket tl"></div>
+      <div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div>
+      <div class="corner-bracket br"></div>
+
+      <!-- Panel Header & Title -->
+      <div class="panel-header">
+        <h2 class="panel-title" id="panelTitle">Sign In</h2>
+        <p class="panel-subtitle" id="panelSubtitle">Welcome back! Enter your details to continue.</p>
+      </div>
+
+      <!-- ====================================================================
+           1. SIGN IN VIEW (SIMPLE WORDING)
+           ==================================================================== -->
+      <div id="signInView">
+        <form class="auth-form" id="loginForm" novalidate>
+          
+          <!-- Message Container -->
+          <div class="auth-message" id="authMessage" role="alert"></div>
+
+          <!-- Email Input -->
+          <div class="form-group">
+            <label class="form-label" for="email">Email Address</label>
+            <div class="input-container">
+              <input type="email" id="email" class="cyber-input" placeholder="name@example.com" autocomplete="email" required>
+            </div>
+          </div>
+
+          <!-- Password Input -->
+          <div class="form-group">
+            <label class="form-label" for="password">Enter Password</label>
+            <div class="input-container password-input-wrapper">
+              <input type="password" id="password" class="cyber-input" placeholder="Enter your password" autocomplete="current-password" required>
+              <button type="button" class="eye-toggle-btn" aria-label="Toggle password visibility">
+                <svg viewBox="0 0 24 24">
+                  <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle class="eye-pupil" cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Options: Remember Me & Forgot Password -->
+          <div class="form-options">
+            <label class="checkbox-container">
+              <input type="checkbox" id="rememberMe" class="cyber-checkbox">
+              <span>Remember Me</span>
+            </label>
+            <a href="#" class="cyber-link forgot-password" id="forgotPasswordBtn">Forgot Password?</a>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="cyber-btn" id="loginBtn">
+            <span>Sign In</span>
+          </button>
+        </form>
+
+        <!-- View Switcher -->
+        <div class="panel-footer">
+          Don't have an account? 
+          <a href="#" class="cyber-link to-signup-link" id="toSignUpBtn">Sign Up</a>
+        </div>
+      </div>
+
+
+      <!-- ====================================================================
+           2. STEPPED SIGN UP VIEW (SIMPLE WORDING)
+           ==================================================================== -->
+      <div id="signUpView" style="display: none;">
+        
+        <!-- Step 1: Submit Email -->
+        <div id="signupStep1">
+          <form class="auth-form" id="signupEmailForm" novalidate>
+            <div class="auth-message" id="signupEmailMsg" role="alert"></div>
+            <div class="form-group">
+              <label class="form-label" for="signup-email">Email Address</label>
+              <div class="input-container">
+                <input type="email" id="signup-email" class="cyber-input" placeholder="name@example.com" required>
+              </div>
+            </div>
+            <button type="submit" class="cyber-btn" id="sendOtpBtn">
+              <span>Send Verification Code</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Step 2: Verify OTP -->
+        <div id="signupStep2" style="display: none;">
+          <form class="auth-form" id="signupOtpForm" novalidate>
+            <div class="auth-message" id="otpMsg" role="alert"></div>
+            <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-bottom: 12px;">
+              Verification code sent to <strong id="displayTargetEmail" style="color: var(--cyan-glow);"></strong>
+            </p>
+            <div class="form-group">
+              <label class="form-label" for="otp-input">Enter 6-Digit Code</label>
+              <div class="input-container">
+                <input type="text" id="otp-input" class="cyber-input" style="font-family: var(--font-mono); letter-spacing: 4px; text-align: center; font-size: 18px;" placeholder="000000" maxlength="6" required>
+              </div>
+            </div>
+            <button type="submit" class="cyber-btn" id="verifyOtpBtn">
+              <span>Verify Code</span>
+            </button>
+            <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px;">
+              <a href="#" class="cyber-link" id="resendOtpBtn">Resend OTP</a>
+              <a href="#" class="cyber-link" id="changeEmailBtn">Change Email</a>
+            </div>
+          </form>
+        </div>
+
+        <!-- Step 3: Create Password -->
+        <div id="signupStep3" style="display: none;">
+          <form class="auth-form" id="createPasswordForm" novalidate>
+            <div class="auth-message" id="passwordMsg" role="alert"></div>
+            <div class="form-group">
+              <label class="form-label" for="signup-password">Create Password</label>
+              <div class="input-container password-input-wrapper">
+                <input type="password" id="signup-password" class="cyber-input" placeholder="Min. 6 characters" required>
+                <button type="button" class="eye-toggle-btn" aria-label="Toggle password visibility">
+                  <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="confirm-password">Confirm Password</label>
+              <div class="input-container password-input-wrapper">
+                <input type="password" id="confirm-password" class="cyber-input" placeholder="Re-enter password" required>
+                <button type="button" class="eye-toggle-btn" aria-label="Toggle password visibility">
+                  <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="cyber-btn" id="createAccountBtn">
+              <span>Create Account</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- View Switcher -->
+        <div class="panel-footer">
+          Already have an account? 
+          <a href="#" class="cyber-link to-signin-link" id="toSignInBtn">Sign In</a>
+        </div>
+      </div>
+
+
+      <!-- ====================================================================
+           3. STEPPED FORGOT PASSWORD VIEW (SIMPLE WORDING)
+           ==================================================================== -->
+      <div id="forgotPasswordView" style="display: none;">
+        
+        <!-- Step 1: Request Reset Code -->
+        <div id="forgotStep1">
+          <form class="auth-form" id="forgotEmailForm" novalidate>
+            <div class="auth-message" id="forgotEmailMsg" role="alert"></div>
+            <div class="form-group">
+              <label class="form-label" for="forgot-email">Email Address</label>
+              <div class="input-container">
+                <input type="email" id="forgot-email" class="cyber-input" placeholder="name@example.com" required>
+              </div>
+            </div>
+            <button type="submit" class="cyber-btn" id="sendForgotOtpBtn">
+              <span>Send Reset Code</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Step 2: Verify Forgot Password OTP -->
+        <div id="forgotStep2" style="display: none;">
+          <form class="auth-form" id="forgotOtpForm" novalidate>
+            <div class="auth-message" id="forgotOtpMsg" role="alert"></div>
+            <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-bottom: 12px;">
+              Reset code sent to <strong id="displayForgotTargetEmail" style="color: var(--cyan-glow);"></strong>
+            </p>
+            <div class="form-group">
+              <label class="form-label" for="forgot-otp-input">Enter 6-Digit Code</label>
+              <div class="input-container">
+                <input type="text" id="forgot-otp-input" class="cyber-input" style="font-family: var(--font-mono); letter-spacing: 4px; text-align: center; font-size: 18px;" placeholder="000000" maxlength="6" required>
+              </div>
+            </div>
+            <button type="submit" class="cyber-btn" id="verifyForgotOtpBtn">
+              <span>Verify Code</span>
+            </button>
+            <div style="display: flex; justify-content: flex-end; margin-top: 10px; font-size: 13px;">
+              <a href="#" class="cyber-link" id="resendForgotOtpBtn">Resend OTP</a>
+            </div>
+          </form>
+        </div>
+
+        <!-- Step 3: Save New Password -->
+        <div id="forgotStep3" style="display: none;">
+          <form class="auth-form" id="resetPasswordForm" novalidate>
+            <div class="auth-message" id="resetPasswordMsg" role="alert"></div>
+            <div class="form-group">
+              <label class="form-label" for="reset-password">New Password</label>
+              <div class="input-container password-input-wrapper">
+                <input type="password" id="reset-password" class="cyber-input" placeholder="Min. 6 characters" required>
+                <button type="button" class="eye-toggle-btn" aria-label="Toggle password visibility">
+                  <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="confirm-reset-password">Confirm New Password</label>
+              <div class="input-container password-input-wrapper">
+                <input type="password" id="confirm-reset-password" class="cyber-input" placeholder="Re-enter new password" required>
+                <button type="button" class="eye-toggle-btn" aria-label="Toggle password visibility">
+                  <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="cyber-btn" id="saveNewPasswordBtn">
+              <span>Save Password</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- View Switcher -->
+        <div class="panel-footer">
+          Remembered your password? 
+          <a href="#" class="cyber-link to-signin-link" id="forgotToSignInBtn">Back to Sign In</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Back to Main Role Selection Portal Link -->
+    <div style="margin-top: 20px; font-size: 13px;">
+      <a href="index.html" class="cyber-link" style="opacity: 0.8;">&larr; Return to Portal Selection</a>
+    </div>
+  </main>
+
+  <!-- Authentication Controller Script -->
+  <script src="login.js"></script>
+</body>
+</html>
