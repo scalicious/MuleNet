@@ -17,30 +17,37 @@ import { GraphData, GraphNode, GraphLink, RiskTier } from '../types/risk';
 import { MOCK_GRAPH_DATA } from '../api/mockGraphData';
 import RiskBadge from './RiskBadge';
 
-const RISK_COLORS: Record<RiskTier, { main: string; glow: string; border: string; bg: string }> = {
+const RISK_PALETTES: Record<
+  RiskTier,
+  { main: string; glow: string; border: string; bg: string; text: string }
+> = {
   LOW: {
     main: '#10b981',
     glow: 'rgba(16, 185, 129, 0.35)',
-    border: 'rgba(16, 185, 129, 0.6)',
+    border: 'rgba(16, 185, 129, 0.7)',
     bg: 'rgba(6, 78, 59, 0.9)',
+    text: '#a7f3d0',
   },
   MEDIUM: {
     main: '#eab308',
     glow: 'rgba(234, 179, 8, 0.35)',
-    border: 'rgba(234, 179, 8, 0.6)',
+    border: 'rgba(234, 179, 8, 0.7)',
     bg: 'rgba(113, 63, 18, 0.9)',
+    text: '#fde68a',
   },
   HIGH: {
     main: '#f97316',
     glow: 'rgba(249, 115, 22, 0.4)',
-    border: 'rgba(249, 115, 22, 0.7)',
+    border: 'rgba(249, 115, 22, 0.75)',
     bg: 'rgba(124, 45, 18, 0.9)',
+    text: '#fed7aa',
   },
   CRITICAL: {
     main: '#ef4444',
-    glow: 'rgba(239, 68, 68, 0.45)',
-    border: 'rgba(239, 68, 68, 0.8)',
-    bg: 'rgba(127, 29, 29, 0.9)',
+    glow: 'rgba(239, 68, 68, 0.5)',
+    border: 'rgba(239, 68, 68, 0.85)',
+    bg: 'rgba(127, 29, 29, 0.95)',
+    text: '#fecaca',
   },
 };
 
@@ -108,12 +115,12 @@ export default function GraphExplorer({
       // Repulsion charge force to prevent clumping
       const charge = fgRef.current.d3Force('charge');
       if (charge) {
-        charge.strength(-420);
+        charge.strength(-450);
       }
       // Link distance force for clean breathing room
       const linkForce = fgRef.current.d3Force('link');
       if (linkForce) {
-        linkForce.distance(95);
+        linkForce.distance(105);
       }
     }
   }, []);
@@ -236,56 +243,19 @@ export default function GraphExplorer({
   }, [onSelectAccount]);
 
   // Focus on Syndicate Alpha cluster
-  const handleFocusSyndicate = useCallback((clusterName: string) => {
-    setSelectedClusterFilter(clusterName);
-    const clusterNodes = initialData.nodes.filter((n) => n.muleCluster === clusterName);
-    if (clusterNodes.length > 0 && fgRef.current) {
-      const avgX = clusterNodes.reduce((sum, n) => sum + (n.x || 0), 0) / clusterNodes.length;
-      const avgY = clusterNodes.reduce((sum, n) => sum + (n.y || 0), 0) / clusterNodes.length;
-      fgRef.current.centerAt(avgX, avgY, 700);
-      fgRef.current.zoom(2.8, 700);
-    }
-  }, [initialData.nodes]);
-
-  // Background Cyber-Grid Renderer
-  const drawBackground = useCallback((ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const { width, height } = dimensions;
-
-    // Subtle dark radial gradient
-    const radial = ctx.createRadialGradient(width / 2, height / 2, 50, width / 2, height / 2, Math.max(width, height) * 0.75);
-    radial.addColorStop(0, '#0a101d');
-    radial.addColorStop(1, '#060911');
-    ctx.fillStyle = radial;
-    ctx.fillRect(0, 0, width, height);
-
-    // Subtle coordinate grid crosshairs
-    ctx.strokeStyle = 'rgba(30, 41, 59, 0.35)';
-    ctx.lineWidth = 0.5;
-
-    const gridSize = 60 * globalScale;
-    const offsetX = (width / 2) % gridSize;
-    const offsetY = (height / 2) % gridSize;
-
-    ctx.beginPath();
-    for (let x = offsetX; x < width; x += gridSize) {
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-    }
-    for (let y = offsetY; y < height; y += gridSize) {
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-    }
-    ctx.stroke();
-
-    // Concentric coordinate rings radiating from center
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.04)';
-    ctx.lineWidth = 1;
-    [120, 260, 420, 600].forEach((r) => {
-      ctx.beginPath();
-      ctx.arc(width / 2, height / 2, r * globalScale, 0, 2 * Math.PI);
-      ctx.stroke();
-    });
-  }, [dimensions]);
+  const handleFocusSyndicate = useCallback(
+    (clusterName: string) => {
+      setSelectedClusterFilter(clusterName);
+      const clusterNodes = initialData.nodes.filter((n) => n.muleCluster === clusterName);
+      if (clusterNodes.length > 0 && fgRef.current) {
+        const avgX = clusterNodes.reduce((sum, n) => sum + (n.x || 0), 0) / clusterNodes.length;
+        const avgY = clusterNodes.reduce((sum, n) => sum + (n.y || 0), 0) / clusterNodes.length;
+        fgRef.current.centerAt(avgX, avgY, 700);
+        fgRef.current.zoom(2.8, 700);
+      }
+    },
+    [initialData.nodes]
+  );
 
   // High-Precision Multi-Layer Node Renderer
   const drawNode = useCallback(
@@ -296,11 +266,21 @@ export default function GraphExplorer({
       const isTwoHopNeighbor = twoHopNeighbors.has(node.id);
       const matchesCluster = !selectedClusterFilter || node.muleCluster === selectedClusterFilter;
 
-      const isDimmed = Boolean((activeSelected && !isFocused && !isTwoHopNeighbor) || (selectedClusterFilter && !matchesCluster));
+      const isDimmed = Boolean(
+        (activeSelected && !isFocused && !isTwoHopNeighbor) ||
+          (selectedClusterFilter && !matchesCluster)
+      );
 
-      const palette = RISK_COLORS[node.riskTier as RiskTier] || RISK_COLORS.LOW;
-      const baseRadius = node.riskTier === 'CRITICAL' ? 8.5 : node.riskTier === 'HIGH' ? 7.5 : node.riskTier === 'MEDIUM' ? 6.5 : 5.5;
-      const radius = isFocused ? baseRadius + 3 : isHovered ? baseRadius + 1.5 : baseRadius;
+      const palette = RISK_PALETTES[node.riskTier as RiskTier] || RISK_PALETTES.LOW;
+      const baseRadius =
+        node.riskTier === 'CRITICAL'
+          ? 9.5
+          : node.riskTier === 'HIGH'
+          ? 8.2
+          : node.riskTier === 'MEDIUM'
+          ? 7.2
+          : 6.2;
+      const radius = isFocused ? baseRadius + 3.5 : isHovered ? baseRadius + 1.8 : baseRadius;
 
       ctx.save();
       ctx.globalAlpha = isDimmed ? 0.12 : 1;
@@ -308,7 +288,14 @@ export default function GraphExplorer({
       // 1. Soft Outer Ambient Glow
       if (!isDimmed) {
         const glowRadius = radius * (isFocused ? 2.8 : isHovered ? 2.4 : 2.0);
-        const glowGrad = ctx.createRadialGradient(node.x, node.y, radius * 0.5, node.x, node.y, glowRadius);
+        const glowGrad = ctx.createRadialGradient(
+          node.x,
+          node.y,
+          radius * 0.4,
+          node.x,
+          node.y,
+          glowRadius
+        );
         glowGrad.addColorStop(0, palette.glow);
         glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
@@ -322,19 +309,19 @@ export default function GraphExplorer({
       if (isFocused) {
         // Outer pulsing ring
         ctx.beginPath();
-        ctx.arc(node.x, node.y, radius + 6, 0, 2 * Math.PI, false);
+        ctx.arc(node.x, node.y, radius + 6.5, 0, 2 * Math.PI, false);
         ctx.strokeStyle = '#06b6d4';
         ctx.lineWidth = 2 / globalScale;
         ctx.stroke();
 
         // High-tech target brackets
-        const bracketRadius = radius + 9;
-        ctx.strokeStyle = 'rgba(6, 182, 212, 0.7)';
+        const bracketRadius = radius + 10;
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.75)';
         ctx.lineWidth = 1.2 / globalScale;
 
         [-Math.PI / 4, Math.PI / 4, (3 * Math.PI) / 4, (-3 * Math.PI) / 4].forEach((angle) => {
           ctx.beginPath();
-          ctx.arc(node.x, node.y, bracketRadius, angle - 0.2, angle + 0.2, false);
+          ctx.arc(node.x, node.y, bracketRadius, angle - 0.22, angle + 0.22, false);
           ctx.stroke();
         });
       }
@@ -343,13 +330,20 @@ export default function GraphExplorer({
       if (activeSelected && isDirectNeighbor && !isFocused) {
         ctx.beginPath();
         ctx.arc(node.x, node.y, radius + 3, 0, 2 * Math.PI, false);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
         ctx.lineWidth = 1.2 / globalScale;
         ctx.stroke();
       }
 
       // 4. Base Node Body with Inner Radial Gradient
-      const nodeGrad = ctx.createRadialGradient(node.x - radius * 0.3, node.y - radius * 0.3, radius * 0.1, node.x, node.y, radius);
+      const nodeGrad = ctx.createRadialGradient(
+        node.x - radius * 0.35,
+        node.y - radius * 0.35,
+        radius * 0.1,
+        node.x,
+        node.y,
+        radius
+      );
       nodeGrad.addColorStop(0, '#ffffff');
       nodeGrad.addColorStop(0.35, palette.main);
       nodeGrad.addColorStop(1, palette.bg);
@@ -365,19 +359,24 @@ export default function GraphExplorer({
       ctx.stroke();
 
       // 5. Intelligent Clean Label Pill (Non-overlapping, styled below node)
-      const shouldShowLabel = isFocused || isHovered || isDirectNeighbor || node.riskTier === 'CRITICAL' || globalScale > 1.6;
+      const shouldShowLabel =
+        isFocused ||
+        isHovered ||
+        isDirectNeighbor ||
+        node.riskTier === 'CRITICAL' ||
+        globalScale > 1.5;
 
       if (shouldShowLabel && !isDimmed) {
         const labelText = node.id;
-        const fontSize = Math.max(9 / globalScale, 2.8);
+        const fontSize = Math.max(9.5 / globalScale, 2.8);
         ctx.font = `600 ${fontSize}px "JetBrains Mono", monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
         const textWidth = ctx.measureText(labelText).width;
-        const pillPaddingX = 4 / globalScale;
-        const pillHeight = fontSize + 4 / globalScale;
-        const pillY = node.y + radius + pillHeight / 2 + 4 / globalScale;
+        const pillPaddingX = 4.5 / globalScale;
+        const pillHeight = fontSize + 4.5 / globalScale;
+        const pillY = node.y + radius + pillHeight / 2 + 4.5 / globalScale;
 
         const pillWidth = textWidth + pillPaddingX * 2;
         const pillX = node.x - pillWidth / 2;
@@ -388,15 +387,30 @@ export default function GraphExplorer({
         ctx.lineWidth = 0.8 / globalScale;
 
         // Draw rounded rectangle pill
-        const cornerRadius = 3 / globalScale;
+        const cornerRadius = 3.5 / globalScale;
         ctx.beginPath();
         ctx.moveTo(pillX + cornerRadius, pillY - pillHeight / 2);
         ctx.lineTo(pillX + pillWidth - cornerRadius, pillY - pillHeight / 2);
-        ctx.quadraticCurveTo(pillX + pillWidth, pillY - pillHeight / 2, pillX + pillWidth, pillY - pillHeight / 2 + cornerRadius);
+        ctx.quadraticCurveTo(
+          pillX + pillWidth,
+          pillY - pillHeight / 2,
+          pillX + pillWidth,
+          pillY - pillHeight / 2 + cornerRadius
+        );
         ctx.lineTo(pillX + pillWidth, pillY + pillHeight / 2 - cornerRadius);
-        ctx.quadraticCurveTo(pillX + pillWidth, pillY + pillHeight / 2, pillX + pillWidth - cornerRadius, pillY + pillHeight / 2);
+        ctx.quadraticCurveTo(
+          pillX + pillWidth,
+          pillY + pillHeight / 2,
+          pillX + pillWidth - cornerRadius,
+          pillY + pillHeight / 2
+        );
         ctx.lineTo(pillX + cornerRadius, pillY + pillHeight / 2);
-        ctx.quadraticCurveTo(pillX, pillY + pillHeight / 2, pillX, pillY + pillHeight / 2 - cornerRadius);
+        ctx.quadraticCurveTo(
+          pillX,
+          pillY + pillHeight / 2,
+          pillX,
+          pillY + pillHeight / 2 - cornerRadius
+        );
         ctx.lineTo(pillX, pillY - pillHeight / 2 + cornerRadius);
         ctx.quadraticCurveTo(pillX, pillY - pillHeight / 2, pillX + cornerRadius, pillY - pillHeight / 2);
         ctx.closePath();
@@ -404,7 +418,7 @@ export default function GraphExplorer({
         ctx.stroke();
 
         // Label typography
-        ctx.fillStyle = isFocused ? '#38bdf8' : node.riskTier === 'CRITICAL' ? '#fecaca' : '#f1f5f9';
+        ctx.fillStyle = isFocused ? '#38bdf8' : palette.text;
         ctx.fillText(labelText, node.x, pillY);
       }
 
@@ -519,7 +533,10 @@ export default function GraphExplorer({
       </div>
 
       {/* Main Canvas & Overlay Area */}
-      <div className="relative flex-1 w-full min-h-[420px] sm:min-h-[500px] lg:min-h-[560px] bg-[#090d15]" ref={containerRef}>
+      <div
+        className="relative flex-1 w-full min-h-[420px] sm:min-h-[500px] lg:min-h-[560px] bg-[#080c14]"
+        ref={containerRef}
+      >
         {/* Floating Canvas Navigation Toolbar */}
         <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5 bg-[#0d131f]/90 border border-slate-800/80 rounded-lg p-1 backdrop-blur-md shadow-lg">
           <button
@@ -560,7 +577,7 @@ export default function GraphExplorer({
           }}
           onNodeClick={handleNodeClick}
           onNodeHover={(node) => setHoveredNode(node as GraphNode | null)}
-          linkCurvature={0.08}
+          linkCurvature={0.12}
           linkColor={(link: any) => {
             if (activeSelected) {
               const srcId = typeof link.source === 'object' ? link.source.id : link.source;
@@ -568,14 +585,12 @@ export default function GraphExplorer({
               const isConnected = twoHopNeighbors.has(srcId) && twoHopNeighbors.has(tgtId);
               if (!isConnected) return 'rgba(30, 41, 59, 0.08)';
             }
-            return link.isRisky ? 'rgba(239, 68, 68, 0.75)' : 'rgba(56, 189, 248, 0.35)';
+            return link.isRisky ? 'rgba(239, 68, 68, 0.85)' : 'rgba(56, 189, 248, 0.45)';
           }}
-          linkWidth={(link: any) => (link.isRisky ? 2.2 : 1.2)}
+          linkWidth={(link: any) => (link.isRisky ? 2.4 : 1.4)}
           linkDirectionalArrowLength={5.5}
           linkDirectionalArrowRelPos={0.88}
-          linkDirectionalArrowColor={(link: any) =>
-            link.isRisky ? '#ef4444' : '#38bdf8'
-          }
+          linkDirectionalArrowColor={(link: any) => (link.isRisky ? '#ef4444' : '#38bdf8')}
           linkDirectionalParticles={(link: any) => {
             if (prefersReducedMotion) return 0;
             if (activeSelected) {
@@ -585,15 +600,11 @@ export default function GraphExplorer({
             }
             return link.isRisky ? 4 : 2;
           }}
-          linkDirectionalParticleSpeed={(link: any) =>
-            link.amount > 50000 ? 0.009 : 0.0045
-          }
+          linkDirectionalParticleSpeed={(link: any) => (link.amount > 50000 ? 0.009 : 0.0045)}
           linkDirectionalParticleWidth={2.5}
-          linkDirectionalParticleColor={(link: any) =>
-            link.isRisky ? '#ef4444' : '#38bdf8'
-          }
+          linkDirectionalParticleColor={(link: any) => (link.isRisky ? '#ef4444' : '#38bdf8')}
           backgroundColor="#080c14"
-          cooldownTicks={140}
+          cooldownTicks={150}
         />
 
         {/* Hover Tooltip Overlay */}
