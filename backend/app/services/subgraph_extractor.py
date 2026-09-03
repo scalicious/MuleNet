@@ -58,3 +58,63 @@ class SubgraphExtractor:
         links: List[Dict[str, Any]] = ego_data.get("links", [])
 
         # Ensure counterparty is present even if not yet in graph
+        node_id_set = {n["id"] for n in nodes}
+        if counterparty_id not in node_id_set:
+            nodes = nodes + [{"id": counterparty_id, "label": "Pending Counterparty",
+                              "risk_tier": "LOW", "is_focus": False}]
+
+        node_ids = [n["id"] for n in nodes]
+        node_idx  = {nid: i for i, nid in enumerate(node_ids)}
+        n         = len(node_ids)
+
+        # ---- Build per-node link statistics ----
+        in_degree   = np.zeros(n, dtype=np.float32)
+        out_degree  = np.zeros(n, dtype=np.float32)
+        inflow      = np.zeros(n, dtype=np.float32)
+        outflow     = np.zeros(n, dtype=np.float32)
+        edge_attn   = [[] for _ in range(n)]
+        risky_count = np.zeros(n, dtype=np.float32)
+        amounts     = [[] for _ in range(n)]
+
+        edge_src, edge_dst = [], []
+
+        for lnk in links:
+            src = lnk.get("source", "")
+            dst = lnk.get("target", "")
+            if src not in node_idx or dst not in node_idx:
+                continue
+            si, di = node_idx[src], node_idx[dst]
+            amt    = float(lnk.get("amount", 1000.0))
+            attn   = float(lnk.get("gat_attention", 0.5))
+            risky  = float(lnk.get("is_risky", False))
+
+            out_degree[si]  += 1
+            in_degree[di]   += 1
+            outflow[si]     += amt
+            inflow[di]      += amt
+            edge_attn[si].append(attn)
+            edge_attn[di].append(attn)
+            amounts[si].append(amt)
+            amounts[di].append(amt)
+            risky_count[si] += risky
+            risky_count[di] += risky
+
+            edge_src.append(si)
+            edge_dst.append(di)
+
+        total_degree = in_degree + out_degree
+        max_degree   = float(np.max(total_degree)) if total_degree.max() > 0 else 1.0
+
+        # ---- Construct feature matrix ----
+        X = np.zeros((n, self.FEATURE_DIM), dtype=np.float32)
+        for i in range(n):
+            td  = float(total_degree[i])
+            inf = float(inflow[i])
+            ouf = float(outflow[i])
+            tot = inf + ouf
+
+            in_r   = float(in_degree[i])  / max(1.0, td)
+            out_r  = float(out_degree[i]) / max(1.0, td)
+            log_td = float(np.log1p(td))
+            fi     = abs(inf - ouf) / max(1.0, tot)
+            fanio  = float(in_degree[i]) / max(1.0, float(out_degree[i]))
