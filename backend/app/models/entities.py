@@ -7,7 +7,7 @@ class AccountEntity(SQLModel, table=True):
     account_id: str = Field(primary_key=True)
     entity_id: str = Field(index=True)
     bank_id: str
-    created_at: str
+    created_at: str = Field(index=True)
 
 class EventEntity(SQLModel, table=True):
     __tablename__ = "events"
@@ -42,4 +42,4 @@ class DecisionLogEntity(SQLModel, table=True):
     recommended_action: str
     is_synthetic_risk: int = Field(default=0)
     decision_payload: str
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(index=True) = Field(default_factory=lambda: datetime.utcnow().isoformat())
