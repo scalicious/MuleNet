@@ -58,3 +58,83 @@ _FEATURE_EXPLANATIONS = {
     "feature_mean": (
         "Normalised transaction amount {val:.3f} — elevated relative to "
         "account category baseline."
+    ),
+    "feature_std": (
+        "Amount z-score {val:.2f}: this transfer deviates significantly "
+        "from the account's historical transaction distribution."
+    ),
+    "amount_zscore": (
+        "Amount z-score {val:.2f}: transaction amount is a statistical "
+        "outlier vs account history."
+    ),
+    "setup_gap_minutes": (
+        "Setup-to-action gap: {val:.0f} minutes between last credential "
+        "change and this transfer — ATO indicator."
+    ),
+    "logins_1h": (
+        "{val:.0f} logins in the past hour — unusually high session "
+        "velocity before this transfer."
+    ),
+    "dormancy_flag": (
+        "Account was dormant before this transfer — reactivation-then-burst "
+        "pattern is a strong AML signal."
+    ),
+    "new_device_flag": (
+        "Transaction from an unrecognised device in the same session window "
+        "as account credential changes."
+    ),
+    "payee_added_flag": (
+        "Payee added within 30 minutes of this transfer — same-session "
+        "payee-add is a top ATO indicator."
+    ),
+}
+
+_DEFAULT_EXPLANATION = "Feature {name} (value: {val:.3f}) contributes to elevated risk score."
+
+
+class SHAPExplainabilityEngine:
+    """
+    Wraps SHAP TreeExplainer for XGBoost-based sequence risk models.
+    Falls back to magnitude-ranked raw feature values when SHAP is unavailable.
+    """
+
+    FEATURE_ORDER = [
+        "flow_imbalance", "fan_in_out_ratio", "degree_vs_time_mean",
+        "in_degree_ratio", "out_degree_ratio", "log_total_degree",
+        "extreme_feature_count_2", "extreme_feature_count_3",
+        "feature_mean", "feature_std",
+    ]
+
+    def __init__(self):
+        self.explainer: Optional[Any] = None
+
+    def init_explainer(self, model: Any) -> None:
+        """
+        Initialises the SHAP TreeExplainer from a trained XGBClassifier.
+        Must be called after model weights are loaded.
+        """
+        if not _SHAP_AVAILABLE:
+            print("[SHAPEngine] SHAP library not installed — using fallback attribution.")
+            return
+        try:
+            self.explainer = _shap.TreeExplainer(model)
+            print("[SHAPEngine] TreeExplainer initialised successfully.")
+        except Exception as e:
+            print(f"[SHAPEngine] TreeExplainer init error: {e}")
+            self.explainer = None
+
+    def explain(
+        self,
+        feature_vector: np.ndarray,
+        feature_values_dict: Dict[str, float],
+        top_n: int = 4
+    ) -> List[Dict[str, Any]]:
+        """
+        Computes SHAP values for the given feature vector and returns the
+        top-N features by absolute SHAP impact.
+
+        Args:
+            feature_vector    : (1, F) numpy array matching FEATURE_ORDER
+            feature_values_dict: mapping of feature name → raw value
+            top_n             : maximum factors to return
+
