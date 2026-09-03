@@ -373,3 +373,75 @@ class NetworkRiskEngine:
 
     def _extract_attention_evidence(
         self,
+        alpha: torch.Tensor,
+        att_edge_index: torch.Tensor,
+        node_ids: List[str],
+        focus_idx: int
+    ) -> List[Dict[str, Any]]:
+        """
+        Surfaces the top-K highest attention edges from GAT Layer-2 output
+        for forensic dossier inclusion.
+
+        Prioritises edges incident to the focus node (sender account),
+        falling back to global top-K if no incident edges exist.
+
+        Args:
+            alpha          : attention weights tensor (E, 1) or (E,)
+            att_edge_index : edge index associated with attention weights (2, E)
+            node_ids       : ordered list of node id strings
+            focus_idx      : index of focus account in node_ids
+
+        Returns:
+            list of evidence dicts: signal, weight, explanation
+        """
+        evidence = []
+        try:
+            alpha_np = alpha.squeeze(-1).cpu().numpy()
+            if alpha_np.ndim == 0:
+                alpha_np = np.array([float(alpha_np)])
+
+            num_edges = att_edge_index.shape[1]
+            incident_mask = (
+                (att_edge_index[0].cpu().numpy() == focus_idx) |
+                (att_edge_index[1].cpu().numpy() == focus_idx)
+            )
+
+            if incident_mask.any():
+                candidate_scores = alpha_np[incident_mask]
+                candidate_edges  = att_edge_index[:, incident_mask].cpu().numpy()
+            else:
+                candidate_scores = alpha_np
+                candidate_edges  = att_edge_index.cpu().numpy()
+
+            top_k       = min(self.TOP_K_ATTENTION_EDGES, len(candidate_scores))
+            top_indices = np.argsort(candidate_scores)[-top_k:][::-1]
+
+            for rank, idx in enumerate(top_indices):
+                src_i    = int(candidate_edges[0, idx])
+                dst_i    = int(candidate_edges[1, idx])
+                attn_val = float(candidate_scores[idx])
+
+                src_name = node_ids[src_i] if src_i < len(node_ids) else f"node_{src_i}"
+                dst_name = node_ids[dst_i] if dst_i < len(node_ids) else f"node_{dst_i}"
+
+                if src_name == dst_name:
+                    continue  # skip self-loops
+
+                evidence.append({
+                    "signal": f"gat_attention_edge_rank{rank + 1}",
+                    "weight": round(attn_val, 4),
+                    "explanation": (
+                        f"GAT Layer-2 assigned attention {attn_val:.3f} to edge "
+                        f"{src_name} → {dst_name} (rank {rank + 1} of subgraph). "
+                        "High attention indicates this edge is structurally significant "
+                        "for the mule risk classification."
+                    )
+                })
+
+        except Exception as e:
+            logger.error(f"[NetworkRiskEngine] Attention extraction error: {e}")
+
+        return evidence
+
+
+network_risk_engine = NetworkRiskEngine()
