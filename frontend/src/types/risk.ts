@@ -19,6 +19,47 @@ export interface Transaction {
   isNew?: boolean;
 }
 
+export interface Account {
+  id: string;
+  name?: string;
+  riskTier: RiskTier;
+  riskScore: number;
+  transactedVolume: number;
+  connectedCount: number;
+  muleCluster?: string;
+  isFocus?: boolean;
+}
+
+export interface GraphNode {
+  id: string;
+  label?: string;
+  riskTier: RiskTier;
+  riskScore: number;
+  transactedVolume: number;
+  connectedCount?: number;
+  muleCluster?: string;
+  isFocus?: boolean;
+  x?: number;
+  y?: number;
+  vx?: number;
+  vy?: number;
+}
+
+export interface GraphLink {
+  source: string | GraphNode;
+  target: string | GraphNode;
+  amount: number;
+  riskScore?: number;
+  riskTier?: RiskTier;
+  frequency?: number;
+  isRisky?: boolean;
+}
+
+export interface GraphData {
+  nodes: GraphNode[];
+  links: GraphLink[];
+}
+
 export interface TypologyEvidence {
   code: string;
   name: string;
