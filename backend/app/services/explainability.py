@@ -29,6 +29,8 @@ class ExplainabilityEngine:
         # ---------------------------------------------------------
         
         all_factors = sequence_factors + network_factors + context_factors
+        if not all_factors:
+            return []
         # Sort by absolute impact descending
         sorted_factors = sorted(all_factors, key=lambda x: abs(x.get("impact", 0.0)), reverse=True)
 
