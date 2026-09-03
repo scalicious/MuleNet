@@ -58,9 +58,6 @@ The outputs from these lenses are passed to a **Fusion & Forensic Engine**. This
 * **Deterministic Motif Detection:** Identifies concrete structural patterns like multi-bank circular rings and device-sharing syndicates using pure graph heuristics.
 * **Temporal Safety:** Operates on an in-memory directed multi-graph that strictly filters connections occurring after the evaluation timestamp.
 
-> [!NOTE]
-> The models in this repository are specifically tuned for the IBM HI-Small AML dataset. We handled extreme class imbalance (0.102% laundering rate) by enforcing rigorous tree depth limits and dynamic sample weighting.
-
 ## Repository Layout
 
 ```text
