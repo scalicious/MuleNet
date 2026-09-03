@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SENTINEL // Threat Intelligence Dashboard</title>
+  <meta name="description" content="Cyber Security Operations Center Command Portal">
+  
+  <link rel="stylesheet" href="login.css">
+  
+  <!-- Inline Dashboard Enhancements -->
+  <style>
+    .dashboard-container {
+      position: relative;
+      z-index: 5;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 28px;
+      background: var(--bg-card);
+      border: 1px solid var(--cyan-border);
+      border-radius: var(--border-radius-lg);
+      backdrop-filter: blur(16px);
+      margin-bottom: 24px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .user-info-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--cyan-muted);
+      border: 1px solid var(--cyan-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--cyan-primary);
+      font-family: var(--font-mono);
+      font-weight: bold;
+    }
+
+    .user-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-email-text {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .user-role-text {
+      font-size: 11px;
+      color: var(--cyan-primary);
+      letter-spacing: 0.5px;
+    }
+
+    .logout-btn {
+      padding: 10px 18px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      border-radius: var(--border-radius-md);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logout-btn:hover {
+      background: rgba(239, 68, 68, 0.3);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+      color: #ffffff;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--cyan-border);
+      border-radius: var(--border-radius-lg);
+      padding: 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .stat-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .stat-trend {
+      font-size: 12px;
+      color: var(--emerald-success);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .main-widget {
+      background: var(--bg-card);
+      border: 1px solid var(--cyan-border);
+      border-radius: var(--border-radius-lg);
+      padding: 28px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .terminal-window {
+      background: #02040a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--border-radius-md);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #38bdf8;
+      line-height: 1.6;
+      margin-top: 16px;
+      overflow-x: auto;
+    }
+  </style>
+
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Dynamic Background Grid -->
+  <div class="cyber-bg">
+    <div class="cyber-grid"></div>
+  </div>
+
+  <!-- Telemetry Top Bar -->
+  <header class="telemetry-bar">
+    <div class="telemetry-item">
+      <span class="status-dot"></span>
+      <span>AUTHENTICATED OPERATOR PORTAL // <span class="accent-text">ACTIVE SESSION</span></span>
+    </div>
+    <div class="telemetry-item">
+      <span>NODE: <span class="accent-text">US-EAST-SOC-1</span></span>
+      <span style="margin: 0 8px; opacity: 0.3;">|</span>
+      <span>ENCRYPTION: <span class="accent-text">AES-256 GCM</span></span>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="dashboard-container">
+    
+    <!-- Top Bar with User Metadata & Logout -->
+    <div class="dashboard-header">
+      <div class="user-info-badge">
+        <div class="avatar-icon" id="userAvatar">OP</div>
+        <div class="user-text">
+          <span class="user-email-text" id="userEmailDisplay">Loading operator...</span>
+          <span class="user-role-text">[ AUTHORIZED SECURITY OPERATOR ]</span>
+        </div>
+      </div>
+      <button id="logoutBtn" class="logout-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>TERMINATE SESSION</span>
+      </button>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">THREAT INTELLIGENCE FEED</div>
+        <div class="stat-value" style="color: var(--cyan-glow);">0 THREATS</div>
+        <div class="stat-trend">&check; All perimeter firewalls optimal</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">ACTIVE GATEWAYS</div>
+        <div class="stat-value" style="color: var(--emerald-success);">12 / 12</div>
+        <div class="stat-trend">&check; 100% network uptime</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">AUTHENTICATION BACKEND</div>
+        <div class="stat-value" style="color: var(--blue-electric);">SUPABASE AUTH</div>
+        <div class="stat-trend" style="color: var(--text-secondary);">Coexisting safely with SOS backend</div>
+      </div>
+    </div>
+
+    <!-- Main Widget / Console -->
+    <div class="main-widget">
+      <h2 style="font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+        SENTINEL Threat Operations Dashboard
+      </h2>
+      <p style="font-size: 13px; color: var(--text-secondary);">
+        Welcome to your new cybersecurity project portal. You are authenticated using your shared Supabase Auth instance.
+      </p>
+
+      <div class="terminal-window">
+        <div>$ sentinel-cli session --status</div>
+        <div style="color: #64748b;">> Verifying JWT bearer token signature... [SUCCESS]</div>
+        <div style="color: #10b981;">> USER_ID: <span id="userIdDisplay" style="color: #00f2fe;">Fetching...</span></div>
+        <div style="color: #10b981;">> CREATED_AT: <span id="createdAtDisplay" style="color: #f8fafc;">Fetching...</span></div>
+        <div style="color: #10b981;">> AUTH_PROVIDER: email (Supabase Auth)</div>
+        <div style="color: #64748b; margin-top: 8px;">> System initialized. Ready for operations.</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Session Control Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const SUPABASE_URL = 'https://jkcgutjknjykqasenwqq.supabase.co';
+      const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_PtBOjVSdVe4eKPfBDE8y6g_RUGPzvG6';
+
+      let supabaseClient = null;
+      if (window.supabase && typeof window.supabase.createClient === 'function') {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+      }
+
+      const userEmailDisplay = document.getElementById('userEmailDisplay');
+      const userIdDisplay = document.getElementById('userIdDisplay');
+      const createdAtDisplay = document.getElementById('createdAtDisplay');
+      const userAvatar = document.getElementById('userAvatar');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      if (!supabaseClient) {
+        window.location.href = './index.html';
+        return;
+      }
+
+      // Check Session & Enforce Guard
+      supabaseClient.auth.getSession().then(({ data: { session } }) => {
+        if (!session || !session.user) {
+          window.location.href = './index.html';
+          return;
+        }
+
+        const user = session.user;
+        if (userEmailDisplay) userEmailDisplay.textContent = user.email || 'Operator';
+        if (userIdDisplay) userIdDisplay.textContent = user.id;
+        if (createdAtDisplay) createdAtDisplay.textContent = new Date(user.created_at).toLocaleString();
+
+        if (userAvatar && user.email) {
+          userAvatar.textContent = user.email.substring(0, 2).toUpperCase();
+        }
+      });
+
+      // Handle Logout
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+          logoutBtn.disabled = true;
+          logoutBtn.innerHTML = '<span>TERMINATING...</span>';
+          await supabaseClient.auth.signOut();
+          window.location.href = './index.html';
+        });
+      }
+    });
+  </script>
+</body>
+</html>
