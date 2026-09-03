@@ -4,7 +4,7 @@ from app.services.demo_runner import demo_runner
 
 router = APIRouter(tags=["Live Stream & Replay"])
 
-@router.get("/demo/stream")
+@router.get("/demo/stream", summary="Live transaction SSE stream")
 async def stream_demo_transactions():
     """
     SSE stream of live incoming transactions with graduated decisions.
