@@ -45,3 +45,23 @@ async def get_ego_graph(account_id: str, hops: int = 2, target_id: Optional[str]
     except Exception as e:
         logger.error(f"GAT model failed during ego graph extraction: {e}")
         network_reasons = []
+
+    # 3. Map GAT attention weights onto the EgoGraph links
+    # The network_reasons contain signals like "gat_attention_edge_rankX"
+    # We parse the explanations to extract the source->target attention
+    attention_map = {}
+    for reason in network_reasons:
+        if "gat_attention_edge" in reason.get("signal", ""):
+            exp = reason.get("explanation", "")
+            weight = reason.get("weight", 0.0)
+            
+            # Attempt to parse "edge A -> B" from explanation string
+            # Example: "GAT Layer-2 assigned attention 0.950 to edge BANK01 -> BANK02"
+            if " to edge " in exp and " -> " in exp:
+                parts = exp.split(" to edge ")[1].split(" (")[0]
+                src_dst = parts.split(" -> ")
+                if len(src_dst) == 2:
+                    src, dst = src_dst[0].strip(), src_dst[1].strip()
+                    attention_map[f"{src}|{dst}"] = weight
+
+    logger.debug(f"Parsed {len(attention_map)} attention edges from GAT.")
