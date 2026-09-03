@@ -1,0 +1,118 @@
+import React from 'react';
+import { ArrowRight, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Transaction, EnforcementStatus } from '../types/risk';
+import RiskBadge from './RiskBadge';
+
+export interface TransactionRowProps {
+  transaction: Transaction;
+  isSelected: boolean;
+  onSelect: (transaction: Transaction) => void;
+  isNew?: boolean;
+}
+
+const STATUS_CONFIG: Record<EnforcementStatus, { style: string; label: string }> = {
+  BLOCKED: {
+    style: 'text-rose-400 bg-rose-950/30 border-rose-800/40',
+    label: 'BLOCKED',
+  },
+  CHALLENGED: {
+    style: 'text-amber-400 bg-amber-950/30 border-amber-800/40',
+    label: 'STEP-UP AUTH',
+  },
+  FLAGGED: {
+    style: 'text-yellow-400 bg-yellow-950/30 border-yellow-800/40',
+    label: 'FLAGGED',
+  },
+  ALLOWED: {
+    style: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40',
+    label: 'ALLOWED',
+  },
+};
+
+export default function TransactionRow({
+  transaction,
+  isSelected,
+  onSelect,
+  isNew = false,
+}: TransactionRowProps) {
+  const formattedTime = transaction.timestamp.includes('T')
+    ? transaction.timestamp.split('T')[1]?.split('.')[0] || transaction.timestamp
+    : transaction.timestamp;
+
+  const formattedAmount = typeof transaction.amount === 'number'
+    ? `$${transaction.amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+    : transaction.amount;
+
+  const statusObj = STATUS_CONFIG[transaction.status] || STATUS_CONFIG.ALLOWED;
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onSelect(transaction);
+    }
+  };
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(transaction)}
+      onKeyDown={handleKeyDown}
+      aria-pressed={isSelected}
+      aria-label={`Transaction ${transaction.id}, Amount ${formattedAmount}, Risk ${transaction.riskTier} score ${transaction.riskScore}`}
+      className={`px-4 sm:px-6 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 transition-all duration-150 cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0f17] ${
+        isSelected
+          ? 'bg-cyan-950/25 border-l-4 border-l-cyan-400 ring-1 ring-cyan-500/20'
+          : 'hover:bg-[#121929]/70 border-l-4 border-l-transparent'
+      } ${isNew ? 'animate-row-appear' : ''}`}
+    >
+      {/* Left: Time, Txn ID, Routing */}
+      <div className="flex items-center space-x-3 sm:space-x-5 min-w-0">
+        {/* Timestamp */}
+        <span className="text-xs font-mono text-slate-400 w-16 sm:w-20 shrink-0">
+          {formattedTime}
+        </span>
+
+        {/* Transaction ID */}
+        <span className="text-xs font-mono font-semibold text-slate-300 w-24 shrink-0 hidden sm:inline-block">
+          {transaction.id}
+        </span>
+
+        {/* Sender -> Receiver Routing */}
+        <div className="flex items-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm font-mono font-medium">
+          <span className="text-cyan-300 bg-cyan-950/30 px-1.5 py-0.5 rounded border border-cyan-800/30">
+            {transaction.sender}
+          </span>
+          <ArrowRight className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+          <span className="text-slate-300 bg-slate-800/40 px-1.5 py-0.5 rounded border border-slate-700/40">
+            {transaction.receiver}
+          </span>
+        </div>
+      </div>
+
+      {/* Right: Amount, Risk Score, Risk Tier Badge, Status */}
+      <div className="flex items-center justify-between md:justify-end space-x-3 sm:space-x-4 shrink-0 pl-16 md:pl-0">
+        {/* Amount */}
+        <span className="text-xs sm:text-sm font-mono font-bold text-slate-100 min-w-[75px] text-right">
+          {formattedAmount}
+        </span>
+
+        {/* Risk Score */}
+        <div className="hidden lg:flex items-center gap-1 font-mono text-xs text-slate-400">
+          <span className="text-[10px] uppercase text-slate-500">Score:</span>
+          <span className="font-bold text-slate-200">{transaction.riskScore}</span>
+        </div>
+
+        {/* Risk Tier Badge */}
+        <RiskBadge tier={transaction.riskTier} score={transaction.riskScore} size="sm" />
+
+        {/* Enforcement Status Pill */}
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-semibold tracking-wider uppercase border ${statusObj.style} min-w-[70px] text-center justify-center`}
+        >
+          {statusObj.label}
+        </span>
+      </div>
+    </div>
+  );
+}
