@@ -9,6 +9,7 @@ class SequenceRiskEngine:
     and evaluates sequence risk.
     """
     def __init__(self):
+        """Initializes the ML model states."""
         # ---------------------------------------------------------
         # PERSON 3 PLACEHOLDER: XGBoost Model
         # self.model = xgb.Booster(model_file='xgboost.json')
