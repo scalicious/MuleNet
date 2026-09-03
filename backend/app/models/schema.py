@@ -9,6 +9,7 @@ class RiskTier(str, Enum):
     CRITICAL = "CRITICAL"
 
 class ActionDecision(str, Enum):
+    """Represents the final prescriptive enforcement action."""
     ALLOW = "ALLOW"
     SOFT_CHALLENGE = "SOFT_CHALLENGE"
     STEP_UP_AUTH = "STEP_UP_AUTH"
