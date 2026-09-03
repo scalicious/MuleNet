@@ -60,6 +60,28 @@ export interface GraphData {
   links: GraphLink[];
 }
 
+export interface Evidence {
+  id: string;
+  title: string;
+  description: string;
+  severity: RiskTier;
+  lens?: 'SEQUENCE' | 'NETWORK' | 'CONTEXT' | 'ANOMALY';
+}
+
+export interface SHAPFeature {
+  feature: string;
+  impact: number;
+  description?: string;
+}
+
+export interface ComplianceAction {
+  id: string;
+  action: string;
+  description: string;
+  priority: 'CRITICAL' | 'HIGH' | 'RECOMMENDED' | 'OPTIONAL';
+  status?: 'PENDING' | 'EXECUTED' | 'DISMISSED';
+}
+
 export interface TypologyEvidence {
   code: string;
   name: string;
@@ -83,6 +105,8 @@ export interface TransactionDossier {
     currency: string;
     riskScore: number;
     riskTier: RiskTier;
+    status: EnforcementStatus;
+    transactionType: string;
     recommendedAction: string;
   };
   lenses: {
@@ -91,9 +115,11 @@ export interface TransactionDossier {
     contextScore: number;
     anomalyScore: number;
   };
-  typologies: TypologyEvidence[];
-  shapFactors: ShapFactor[];
-  graphContext: {
+  evidenceList: Evidence[];
+  shapFeatures: SHAPFeature[];
+  complianceActions: ComplianceAction[];
+  typologies?: TypologyEvidence[];
+  graphContext?: {
     clusterId?: string;
     directDegree: number;
     syndicateRisk: number;

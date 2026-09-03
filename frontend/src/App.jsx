@@ -3,13 +3,17 @@ import DashboardHeader from './components/DashboardHeader';
 import MetricsBar from './components/MetricsBar';
 import LiveTransactionFeed from './components/LiveTransactionFeed';
 import GraphExplorer from './components/GraphExplorer';
+import CaseDossierModal from './components/CaseDossierModal';
+import { FileSearch } from 'lucide-react';
 
 export default function App() {
   const [selectedTxn, setSelectedTxn] = useState(null);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
+  const [isDossierOpen, setIsDossierOpen] = useState(false);
 
   const handleSelectTransaction = (tx) => {
     setSelectedTxn(tx);
+    setIsDossierOpen(true);
     if (tx?.sender) {
       setSelectedAccountId(tx.sender);
     }
@@ -48,7 +52,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Selected Transaction Action Bar (Readiness for CaseDossierModal) */}
+        {/* Selected Transaction Action Bar */}
         {selectedTxn && (
           <div className="p-3.5 rounded-lg border border-cyan-800/40 bg-cyan-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
             <div className="flex items-center gap-2 text-slate-300 flex-wrap">
@@ -58,12 +62,23 @@ export default function App() {
               <span className="text-slate-100 font-bold">${selectedTxn.amount?.toLocaleString()}</span>
               <span className="text-cyan-300 font-semibold">| Focus Graph: {selectedTxn.sender}</span>
             </div>
-            <span className="text-slate-400 italic shrink-0">
-              Case dossier ready to inspect
-            </span>
+            <button
+              onClick={() => setIsDossierOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono font-semibold bg-cyan-900/50 hover:bg-cyan-800/60 text-cyan-200 border border-cyan-700/60 transition shrink-0"
+            >
+              <FileSearch className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Inspect Case Dossier</span>
+            </button>
           </div>
         )}
       </main>
+
+      {/* Case Dossier Forensic Investigation Modal */}
+      <CaseDossierModal
+        transaction={selectedTxn}
+        isOpen={isDossierOpen}
+        onClose={() => setIsDossierOpen(false)}
+      />
     </div>
   );
 }
