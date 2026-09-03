@@ -53,3 +53,43 @@ def test_context_risk_engine():
         action_type="ACH"
     )
     assert low_score < 0.30
+
+    # High-value cross-currency / international wire
+    high_score, factors = context_risk_engine.score_context(
+        amount=85000.0,
+        currency="EUR",
+        counterparty_id="BANK99_OFFSHORE",
+        action_type="WIRE"
+    )
+    assert high_score > 0.40
+
+def test_anomaly_engine():
+    # Normal transaction
+    anom_norm = anomaly_engine.score_anomaly(amount=100.0, velocity=1.0, setup_gap=1000.0)
+    # Spike transaction
+    anom_spike = anomaly_engine.score_anomaly(amount=95000.0, velocity=10.0, setup_gap=0.5)
+    assert 0.0 <= anom_norm <= 1.0
+    assert 0.0 <= anom_spike <= 1.0
+
+def test_fusion_engine_decision_matrix():
+    # Critical risk combination
+    crit_score, crit_tier, crit_action = risk_fusion_engine.fuse_scores(
+        seq_score=0.92,
+        net_score=0.88,
+        ctx_score=0.70,
+        anomaly_score=0.85
+    )
+    assert crit_score >= 0.85
+    assert crit_tier.value == "CRITICAL"
+    assert crit_action.value == "HOLD_FOR_REVIEW"
+
+    # Low risk combination
+    low_score, low_tier, low_action = risk_fusion_engine.fuse_scores(
+        seq_score=0.08,
+        net_score=0.10,
+        ctx_score=0.05,
+        anomaly_score=0.05
+    )
+    assert low_score <= 0.30
+    assert low_tier.value == "LOW"
+    assert low_action.value == "ALLOW"
