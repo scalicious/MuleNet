@@ -13,7 +13,7 @@
       position: relative;
       z-index: 5;
       width: 100%;
-      max-width: 1100px;
+      max-width: 1140px;
       margin: 0 auto;
       padding: 30px 20px;
     }
@@ -92,7 +92,7 @@
       color: #ffffff;
     }
 
-    .grid-2col {
+    .grid-3col {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 24px;
@@ -106,6 +106,13 @@
       padding: 28px;
       backdrop-filter: blur(16px);
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .admin-card.danger-card {
+      border-color: rgba(239, 68, 68, 0.4);
     }
 
     .card-title {
@@ -144,6 +151,12 @@
       font-size: 13px;
     }
 
+    .email-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .badge-status {
       font-size: 10px;
       padding: 2px 8px;
@@ -152,6 +165,22 @@
       border: 1px solid #10b981;
       color: #6ee7b7;
       text-transform: uppercase;
+    }
+
+    .btn-delete-item {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+
+    .btn-delete-item:hover {
+      background: rgba(239, 68, 68, 0.35);
+      color: #ffffff;
     }
   </style>
 
@@ -194,57 +223,92 @@
       </button>
     </div>
 
-    <!-- Main Admin Controls Grid -->
-    <div class="grid-2col">
+    <!-- Main Admin Controls 3-Column Grid -->
+    <div class="grid-3col">
       
-      <!-- Feature: Manually Add Authorized Admin Emails -->
+      <!-- Card 1: Manually Add Authorized Admin Email -->
       <div class="admin-card">
-        <h2 class="card-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-glow)" stroke-width="2">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="8.5" cy="7" r="4"></circle>
-            <line x1="20" y1="8" x2="20" y2="14"></line>
-            <line x1="17" y1="11" x2="23" y2="11"></line>
-          </svg>
-          Add Admin Email Manually
-        </h2>
-        <p class="card-subtitle">
-          Pre-authorize new administrator emails to allow Admin Portal login privileges.
-        </p>
+        <div>
+          <h2 class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-glow)" stroke-width="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <line x1="20" y1="8" x2="20" y2="14"></line>
+              <line x1="17" y1="11" x2="23" y2="11"></line>
+            </svg>
+            Add Admin Email
+          </h2>
+          <p class="card-subtitle">
+            Pre-authorize new administrator emails to grant Admin Portal login privileges.
+          </p>
+        </div>
 
         <form id="addAdminForm" class="auth-form">
           <div class="auth-message" id="addAdminMsg" role="alert"></div>
           
           <div class="form-group">
-            <label class="form-label" for="newAdminEmail">New Admin Email Address</label>
-            <input type="email" id="newAdminEmail" class="cyber-input" placeholder="admin.user@sentinel-sec.io" required>
+            <label class="form-label" for="newAdminEmail">Admin Email Address</label>
+            <input type="email" id="newAdminEmail" class="cyber-input" placeholder="admin@example.com" required>
           </div>
 
           <button type="submit" class="cyber-btn" id="addAdminBtn" style="background: linear-gradient(135deg, #06b6d4, #2563eb);">
-            <span>Authorise Admin Email</span>
+            <span>Authorise Email</span>
           </button>
         </form>
       </div>
 
-      <!-- Authorized Admin Email Roster -->
-      <div class="admin-card">
-        <h2 class="card-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-glow)" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
-          Authorized Admin Roster
-        </h2>
-        <p class="card-subtitle">
-          Currently pre-authorized administrator accounts in Supabase.
-        </p>
+      <!-- Card 2: Delete Email from Database -->
+      <div class="admin-card danger-card">
+        <div>
+          <h2 class="card-title" style="color: #fca5a5;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+            Delete Email from Database
+          </h2>
+          <p class="card-subtitle">
+            Search and delete user or admin email records from database. Checks existence before deletion.
+          </p>
+        </div>
 
-        <div class="email-list" id="adminRosterList">
-          <div class="email-item">
-            <span id="currentAdminEmailItem">Loading...</span>
-            <span class="badge-status">AUTHORIZED</span>
+        <form id="deleteEmailForm" class="auth-form">
+          <div class="auth-message" id="deleteEmailMsg" role="alert"></div>
+          
+          <div class="form-group">
+            <label class="form-label" for="deleteTargetEmail">Email Address to Delete</label>
+            <input type="email" id="deleteTargetEmail" class="cyber-input" placeholder="user@example.com" required>
+          </div>
+
+          <button type="submit" class="cyber-btn" id="deleteEmailBtn" style="background: linear-gradient(135deg, #dc2626, #991b1b); box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);">
+            <span>Delete Email Record</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Card 3: Authorized Admin Roster -->
+      <div class="admin-card">
+        <div>
+          <h2 class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-glow)" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            Authorized Admin Roster
+          </h2>
+          <p class="card-subtitle">
+            Currently pre-authorized administrator accounts in database registry.
+          </p>
+
+          <div class="email-list" id="adminRosterList">
+            <div class="email-item">
+              <span id="currentAdminEmailItem">Loading...</span>
+              <span class="badge-status">AUTHORIZED</span>
+            </div>
           </div>
         </div>
       </div>
@@ -253,7 +317,7 @@
 
   </main>
 
-  <!-- Admin Dashboard Logic Script -->
+  <!-- Admin Dashboard Script -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const SUPABASE_URL = 'https://jkcgutjknjykqasenwqq.supabase.co';
@@ -270,8 +334,13 @@
       
       const addAdminForm = document.getElementById('addAdminForm');
       const newAdminEmailInput = document.getElementById('newAdminEmail');
-      const addAdminBtn = document.getElementById('addAdminBtn');
       const addAdminMsg = document.getElementById('addAdminMsg');
+
+      const deleteEmailForm = document.getElementById('deleteEmailForm');
+      const deleteTargetEmailInput = document.getElementById('deleteTargetEmail');
+      const deleteEmailBtn = document.getElementById('deleteEmailBtn');
+      const deleteEmailMsg = document.getElementById('deleteEmailMsg');
+
       const adminRosterList = document.getElementById('adminRosterList');
 
       if (!supabaseClient) {
@@ -295,10 +364,10 @@
         loadAuthorizedAdmins(user.email);
       });
 
-      // Load Authorized Admins from LocalStorage / Supabase
+      // Load Authorized Admins Roster
       function loadAuthorizedAdmins(currentEmail) {
         let authorizedList = JSON.parse(localStorage.getItem('sentinel_authorized_admins') || '[]');
-        if (!authorizedList.includes(currentEmail)) {
+        if (currentEmail && !authorizedList.includes(currentEmail)) {
           authorizedList.push(currentEmail);
           localStorage.setItem('sentinel_authorized_admins', JSON.stringify(authorizedList));
         }
@@ -310,14 +379,71 @@
             item.className = 'email-item';
             item.innerHTML = `
               <span>${email}</span>
-              <span class="badge-status">AUTHORIZED</span>
+              <div class="email-actions">
+                <span class="badge-status">AUTHORIZED</span>
+                <button type="button" class="btn-delete-item" data-email="${email}">Remove</button>
+              </div>
             `;
             adminRosterList.appendChild(item);
+          });
+
+          // Wire up remove buttons in roster
+          adminRosterList.querySelectorAll('.btn-delete-item').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const targetEmail = btn.dataset.email;
+              performDeleteEmail(targetEmail, deleteEmailMsg);
+            });
           });
         }
       }
 
-      // Handle Manually Adding New Admin Email
+      // Helper function to check existence & delete email
+      async function performDeleteEmail(targetEmail, messageContainer) {
+        if (!targetEmail) return;
+        const normalizedEmail = targetEmail.trim().toLowerCase();
+
+        let authorizedList = JSON.parse(localStorage.getItem('sentinel_authorized_admins') || '[]');
+        let profileFound = false;
+
+        // Step 1: Check database profiles table for existence
+        try {
+          const { data: existingProfile } = await supabaseClient
+            .from('profiles')
+            .select('id, email')
+            .eq('email', normalizedEmail)
+            .maybeSingle();
+
+          if (existingProfile) {
+            profileFound = true;
+            // Delete from profiles table
+            await supabaseClient
+              .from('profiles')
+              .delete()
+              .eq('email', normalizedEmail);
+          }
+        } catch (err) {}
+
+        const listIndex = authorizedList.indexOf(normalizedEmail);
+
+        // Step 2: Evaluate existence outcome
+        if (!profileFound && listIndex === -1) {
+          showMsg(messageContainer, `Email "${normalizedEmail}" was NOT found in database or admin registry. No record was deleted.`, 'error');
+          return;
+        }
+
+        // Remove from local admin list
+        if (listIndex !== -1) {
+          authorizedList.splice(listIndex, 1);
+          localStorage.setItem('sentinel_authorized_admins', JSON.stringify(authorizedList));
+        }
+
+        showMsg(messageContainer, `Email "${normalizedEmail}" was found and successfully deleted from database records.`, 'success');
+        
+        const currentUser = adminEmailDisplay ? adminEmailDisplay.textContent : '';
+        loadAuthorizedAdmins(currentUser);
+      }
+
+      // Handle Add Admin Email Form
       if (addAdminForm) {
         addAdminForm.addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -333,11 +459,9 @@
             return;
           }
 
-          // Pre-authorize in Supabase / Local Registry
           authorizedList.push(newEmail);
           localStorage.setItem('sentinel_authorized_admins', JSON.stringify(authorizedList));
 
-          // Also attempt inserting into Supabase profile / admin_users table if present
           try {
             await supabaseClient.from('profiles').upsert({ email: newEmail, role: 'admin' });
           } catch (err) {}
@@ -347,6 +471,30 @@
 
           const currentUserEmail = adminEmailDisplay ? adminEmailDisplay.textContent : '';
           loadAuthorizedAdmins(currentUserEmail);
+        });
+      }
+
+      // Handle Delete Email Form
+      if (deleteEmailForm) {
+        deleteEmailForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (deleteEmailMsg) deleteEmailMsg.style.display = 'none';
+
+          const emailToDelete = deleteTargetEmailInput ? deleteTargetEmailInput.value.trim().toLowerCase() : '';
+          if (!emailToDelete) return;
+
+          if (deleteEmailBtn) {
+            deleteEmailBtn.disabled = true;
+            deleteEmailBtn.innerHTML = '<span>Checking & Deleting...</span>';
+          }
+
+          await performDeleteEmail(emailToDelete, deleteEmailMsg);
+
+          if (deleteEmailBtn) {
+            deleteEmailBtn.disabled = false;
+            deleteEmailBtn.innerHTML = '<span>Delete Email Record</span>';
+          }
+          if (deleteTargetEmailInput) deleteTargetEmailInput.value = '';
         });
       }
 
