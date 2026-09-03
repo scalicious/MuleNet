@@ -47,3 +47,24 @@ class AnomalyEngine:
             [300.0, 2.5, 1.0], [600.0, 1.2, 0.1], [900.0, 2.8, 0.2]
         ])
         self.model.fit(dummy_data)
+
+    def _prepare_features(self, amount: float, velocity: float, setup_gap: float) -> np.ndarray:
+        """
+        Cleans and normalizes input features for the Isolation Forest.
+        Handles missing values, NaNs, and bounds clipping to prevent
+        inference errors on wild data streams.
+        """
+        amt = float(amount) if amount is not None else 0.0
+        vel = float(velocity) if velocity is not None else 0.0
+        gap = float(setup_gap) if setup_gap is not None else 9999.0
+
+        if np.isnan(amt) or amt < 0: amt = 0.0
+        if np.isnan(vel) or vel < 0: vel = 0.0
+        if np.isnan(gap) or gap < 0: gap = 9999.0
+        
+        # Clip extreme outliers that might destabilize the predict bounds
+        amt = min(amt, 1000000.0)
+        vel = min(vel, 1000.0)
+        gap = min(gap, 100000.0)
+
+        return np.array([[amt, vel, gap]])
