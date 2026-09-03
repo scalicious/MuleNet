@@ -1,6 +1,7 @@
 import React from 'react';
 import Header from './components/Header';
 import MetricCard from './components/MetricCard';
+import LiveTransactionFeed from './components/LiveTransactionFeed';
 import { ShieldCheck, Clock, Target, Network } from 'lucide-react';
 
 const METRICS_DATA = [
@@ -67,18 +68,9 @@ export default function App() {
           </div>
         </section>
 
-        {/* Empty Main Dashboard Area */}
-        <section aria-label="Dashboard Content Area" className="flex-1">
-          <div className="w-full min-h-[460px] rounded-lg border border-[#1f293d] bg-[#0d131f]/50 p-6 flex flex-col items-center justify-center text-center">
-            <div className="max-w-md space-y-2">
-              <p className="text-sm font-medium text-slate-400">
-                Main Dashboard Area
-              </p>
-              <p className="text-xs text-slate-500 font-mono">
-                Ready for graph, transaction feed, simulator & risk intelligence modules.
-              </p>
-            </div>
-          </div>
+        {/* Live Transaction Feed Section */}
+        <section aria-label="Live Transaction Stream">
+          <LiveTransactionFeed />
         </section>
       </main>
     </div>
