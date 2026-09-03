@@ -118,3 +118,48 @@ class RingDetector:
                 result["syndicate_accounts"] = peers
                 # Find shared device id
                 shared_devices = set()
+                for peer in peers:
+                    edge_data = device_g.get_edge_data(account_id, peer, {})
+                    if isinstance(edge_data, dict):
+                        did = edge_data.get("device_id", "unknown")
+                        shared_devices.add(did)
+                result["signals"].append(
+                    f"Device sharing syndicate: account links to {len(peers)} peers "
+                    f"via device(s) [{', '.join(list(shared_devices)[:2])}]."
+                )
+
+        # ---- 3. Collection hub (high fan-in) detection ----
+        if causal_g.has_node(account_id):
+            in_deg = causal_g.in_degree(account_id)
+            if in_deg >= self.HUB_THRESHOLD:
+                result["is_hub"] = True
+                result["signals"].append(
+                    f"Fan-in collection hub: {in_deg} distinct senders in causal window — "
+                    "consistent with smurfing aggregation node."
+                )
+
+        # ---- 4. Layering depth (longest forward-reach from account) ----
+        if causal_g.has_node(account_id):
+            try:
+                lengths = nx.single_source_shortest_path_length(causal_g, account_id)
+                if lengths:
+                    max_depth = max(lengths.values())
+                    result["layering_depth"] = int(max_depth)
+            except Exception:
+                pass
+
+        return result
+
+
+def _parse_iso(ts: str) -> datetime:
+    """Robust ISO-8601 parser."""
+    ts = ts.rstrip("Z").replace("T", " ")
+    for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(ts, fmt)
+        except ValueError:
+            continue
+    raise ValueError(f"Cannot parse timestamp: {ts}")
+
+
+ring_detector = RingDetector()
