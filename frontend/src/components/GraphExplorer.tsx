@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import ForceGraph2D, { ForceGraphMethods } from 'react-force-graph-2d';
-import { Network, Maximize2, RotateCcw, Shield, Layers, DollarSign, Users } from 'lucide-react';
+import { Network, Maximize2, RotateCcw, Shield, Layers, DollarSign, Users, AlertTriangle, Activity } from 'lucide-react';
 import { GraphData, GraphNode, GraphLink, RiskTier } from '../types/risk';
 import { MOCK_GRAPH_DATA } from '../api/mockGraphData';
 import RiskBadge from './RiskBadge';
@@ -29,6 +29,16 @@ export default function GraphExplorer({
   const [dimensions, setDimensions] = useState({ width: 800, height: 480 });
   const [internalSelectedNode, setInternalSelectedNode] = useState<GraphNode | null>(null);
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  // Motion preference detection
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+    const listener = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, []);
 
   // Responsive dimensions handler
   useEffect(() => {
@@ -37,7 +47,7 @@ export default function GraphExplorer({
         const { clientWidth, clientHeight } = containerRef.current;
         setDimensions({
           width: clientWidth || 800,
-          height: clientHeight >= 380 ? clientHeight : 480,
+          height: clientHeight >= 420 ? clientHeight : 480,
         });
       }
     };
@@ -99,24 +109,43 @@ export default function GraphExplorer({
     };
   }, [activeSelected, adjacency]);
 
-  // Handle node click
-  const handleNodeClick = useCallback((node: GraphNode) => {
-    setInternalSelectedNode(node);
-    if (onSelectAccount) {
-      onSelectAccount(node.id);
-    }
+  // Selected account detailed stats
+  const selectedNodeStats = useMemo(() => {
+    if (!activeSelected) return null;
+    const connectedNodeIds = adjacency.get(activeSelected.id) || new Set<string>();
+    const connectedNodes = initialData.nodes.filter((n) => connectedNodeIds.has(n.id));
+    const highRiskConnCount = connectedNodes.filter(
+      (n) => n.riskTier === 'HIGH' || n.riskTier === 'CRITICAL'
+    ).length;
 
-    // Re-center and focus graph around clicked node
-    if (fgRef.current && node.x !== undefined && node.y !== undefined) {
-      fgRef.current.centerAt(node.x, node.y, 800);
-      fgRef.current.zoom(2.5, 800);
-    }
-  }, [onSelectAccount]);
+    return {
+      directCount: connectedNodeIds.size,
+      twoHopCount: twoHopNeighbors.size,
+      highRiskCount: highRiskConnCount,
+    };
+  }, [activeSelected, adjacency, initialData.nodes, twoHopNeighbors]);
+
+  // Handle node click
+  const handleNodeClick = useCallback(
+    (node: GraphNode) => {
+      setInternalSelectedNode(node);
+      if (onSelectAccount) {
+        onSelectAccount(node.id);
+      }
+
+      // Re-center and focus graph around clicked node
+      if (fgRef.current && node.x !== undefined && node.y !== undefined) {
+        fgRef.current.centerAt(node.x, node.y, 700);
+        fgRef.current.zoom(2.4, 700);
+      }
+    },
+    [onSelectAccount]
+  );
 
   // Fit graph to screen
   const handleFitNetwork = useCallback(() => {
     if (fgRef.current) {
-      fgRef.current.zoomToFit(600, 50);
+      fgRef.current.zoomToFit(600, 45);
     }
   }, []);
 
@@ -127,37 +156,44 @@ export default function GraphExplorer({
       onSelectAccount('');
     }
     if (fgRef.current) {
-      fgRef.current.zoomToFit(600, 50);
+      fgRef.current.zoomToFit(600, 45);
     }
   }, [onSelectAccount]);
 
-  // Custom Node Canvas Renderer
+  // Custom Canvas Node Drawing (High-precision institutional styling)
   const drawNode = useCallback(
     (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const isFocused = activeSelected?.id === node.id;
-      const isNeighbor = twoHopNeighbors.has(node.id);
-      const isDimmed = Boolean(activeSelected && !isFocused && !isNeighbor);
+      const isDirectNeighbor = directNeighbors.has(node.id);
+      const isTwoHopNeighbor = twoHopNeighbors.has(node.id);
+      const isDimmed = Boolean(activeSelected && !isFocused && !isTwoHopNeighbor);
 
       const color = RISK_COLORS[node.riskTier as RiskTier] || '#38bdf8';
-      const radius = isFocused ? 9 : node.riskTier === 'CRITICAL' ? 7.5 : 6;
+      const radius = isFocused ? 9 : node.riskTier === 'CRITICAL' ? 7 : 5.5;
 
       ctx.save();
-      ctx.globalAlpha = isDimmed ? 0.15 : 1;
+      ctx.globalAlpha = isDimmed ? 0.12 : 1;
 
       // Outer focus ring for selected node
       if (isFocused) {
         ctx.beginPath();
         ctx.arc(node.x, node.y, radius + 4.5, 0, 2 * Math.PI, false);
-        ctx.strokeStyle = '#06b6d4'; // Cyan halo
-        ctx.lineWidth = 2.5 / globalScale;
+        ctx.strokeStyle = '#06b6d4'; // Cyan focus halo
+        ctx.lineWidth = 2.2 / globalScale;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius + 7, 0, 2 * Math.PI, false);
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+        ctx.lineWidth = 1 / globalScale;
         ctx.stroke();
       }
 
       // 1-hop direct neighbor subtle ring
-      if (activeSelected && directNeighbors.has(node.id)) {
+      if (activeSelected && isDirectNeighbor && !isFocused) {
         ctx.beginPath();
         ctx.arc(node.x, node.y, radius + 2.5, 0, 2 * Math.PI, false);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 1.2 / globalScale;
         ctx.stroke();
       }
@@ -167,30 +203,31 @@ export default function GraphExplorer({
       ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI, false);
       ctx.fillStyle = color;
       ctx.fill();
-      ctx.strokeStyle = isFocused ? '#ffffff' : 'rgba(15, 23, 42, 0.8)';
-      ctx.lineWidth = 1.5 / globalScale;
+      ctx.strokeStyle = isFocused ? '#ffffff' : 'rgba(11, 15, 23, 0.9)';
+      ctx.lineWidth = 1.2 / globalScale;
       ctx.stroke();
 
-      // Account Label (always shown if focused or hovered or high scale)
-      if (isFocused || node === hoveredNode || globalScale > 1.8) {
+      // Intelligent Text Label: Rendered for focused, hovered, critical, or when zoomed in
+      const shouldShowLabel = isFocused || node === hoveredNode || node.riskTier === 'CRITICAL' || globalScale > 1.8;
+      if (shouldShowLabel && !isDimmed) {
         const label = node.id;
-        const fontSize = Math.max(10 / globalScale, 3);
+        const fontSize = Math.max(9.5 / globalScale, 2.5);
         ctx.font = `600 ${fontSize}px "JetBrains Mono", monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // Background tag pill
         const textWidth = ctx.measureText(label).width;
         const pillHeight = fontSize + 4 / globalScale;
-        const pillY = node.y + radius + pillHeight / 2 + 3 / globalScale;
+        const pillY = node.y + radius + pillHeight / 2 + 2.5 / globalScale;
 
-        ctx.fillStyle = 'rgba(11, 15, 23, 0.85)';
-        ctx.strokeStyle = isFocused ? '#06b6d4' : 'rgba(31, 41, 61, 0.8)';
-        ctx.lineWidth = 1 / globalScale;
+        // Clean label backing chip
+        ctx.fillStyle = isFocused ? 'rgba(8, 51, 68, 0.95)' : 'rgba(11, 15, 23, 0.88)';
+        ctx.strokeStyle = isFocused ? '#06b6d4' : isDirectNeighbor ? 'rgba(56, 189, 248, 0.5)' : 'rgba(31, 41, 61, 0.8)';
+        ctx.lineWidth = 0.8 / globalScale;
         ctx.fillRect(node.x - textWidth / 2 - 3 / globalScale, pillY - pillHeight / 2, textWidth + 6 / globalScale, pillHeight);
         ctx.strokeRect(node.x - textWidth / 2 - 3 / globalScale, pillY - pillHeight / 2, textWidth + 6 / globalScale, pillHeight);
 
-        ctx.fillStyle = isFocused ? '#38bdf8' : '#e2e8f0';
+        ctx.fillStyle = isFocused ? '#38bdf8' : node.riskTier === 'CRITICAL' ? '#fca5a5' : '#e2e8f0';
         ctx.fillText(label, node.x, pillY);
       }
 
@@ -258,6 +295,33 @@ export default function GraphExplorer({
         </div>
       </div>
 
+      {/* Network Statistics Bar */}
+      <div className="px-4 sm:px-6 py-2 bg-[#090d15] border-b border-[#1f293d]/80 flex items-center justify-between flex-wrap gap-3 text-xs font-mono">
+        <div className="flex items-center space-x-4 sm:space-x-6 text-[11px]">
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-500 uppercase">Nodes:</span>
+            <span className="font-bold text-slate-200">148</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-500 uppercase">Active Links:</span>
+            <span className="font-bold text-cyan-300">326</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-500 uppercase">High Risk:</span>
+            <span className="font-bold text-amber-400">17</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-500 uppercase">Critical:</span>
+            <span className="font-bold text-rose-400">4</span>
+          </div>
+        </div>
+
+        <div className="hidden md:flex items-center gap-1 text-[11px] text-slate-500">
+          <Activity className="w-3 h-3 text-cyan-400" />
+          <span>GAT Attention Edge Weights Active</span>
+        </div>
+      </div>
+
       {/* Main Canvas & Overlay Area */}
       <div className="relative w-full h-[480px] bg-[#090d15]" ref={containerRef}>
         <ForceGraph2D
@@ -270,7 +334,7 @@ export default function GraphExplorer({
           nodePointerAreaPaint={(node: any, color, ctx) => {
             ctx.fillStyle = color;
             ctx.beginPath();
-            ctx.arc(node.x, node.y, 12, 0, 2 * Math.PI, false);
+            ctx.arc(node.x, node.y, 14, 0, 2 * Math.PI, false);
             ctx.fill();
           }}
           onNodeClick={handleNodeClick}
@@ -280,7 +344,7 @@ export default function GraphExplorer({
               const srcId = typeof link.source === 'object' ? link.source.id : link.source;
               const tgtId = typeof link.target === 'object' ? link.target.id : link.target;
               const isConnected = twoHopNeighbors.has(srcId) && twoHopNeighbors.has(tgtId);
-              if (!isConnected) return 'rgba(30, 41, 59, 0.15)';
+              if (!isConnected) return 'rgba(30, 41, 59, 0.12)';
             }
             return link.isRisky ? 'rgba(239, 68, 68, 0.65)' : 'rgba(56, 189, 248, 0.35)';
           }}
@@ -291,6 +355,7 @@ export default function GraphExplorer({
             link.isRisky ? '#ef4444' : '#38bdf8'
           }
           linkDirectionalParticles={(link: any) => {
+            if (prefersReducedMotion) return 0;
             if (activeSelected) {
               const srcId = typeof link.source === 'object' ? link.source.id : link.source;
               const tgtId = typeof link.target === 'object' ? link.target.id : link.target;
@@ -340,7 +405,7 @@ export default function GraphExplorer({
         )}
 
         {/* Active Selected Account HUD Panel */}
-        {activeSelected && (
+        {activeSelected && selectedNodeStats && (
           <div className="absolute bottom-4 right-4 z-10 bg-[#0d131f]/95 border border-cyan-800/60 rounded-lg p-4 shadow-2xl backdrop-blur-md max-w-sm w-full font-mono">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">
               <div className="flex items-center space-x-2">
@@ -351,6 +416,7 @@ export default function GraphExplorer({
             </div>
 
             <div className="grid grid-cols-2 gap-2.5 text-xs">
+              {/* Transaction Volume */}
               <div className="bg-slate-900/60 p-2 rounded border border-slate-800">
                 <div className="text-[10px] text-slate-500 uppercase flex items-center gap-1">
                   <DollarSign className="w-3 h-3 text-slate-400" /> Volume
@@ -360,28 +426,33 @@ export default function GraphExplorer({
                 </div>
               </div>
 
+              {/* Connected Accounts */}
               <div className="bg-slate-900/60 p-2 rounded border border-slate-800">
                 <div className="text-[10px] text-slate-500 uppercase flex items-center gap-1">
-                  <Users className="w-3 h-3 text-slate-400" /> 1-Hop Degree
+                  <Users className="w-3 h-3 text-slate-400" /> Connected Accounts
                 </div>
                 <div className="text-sm font-bold text-cyan-300 mt-0.5">
-                  {directNeighbors.size} Direct Links
+                  {selectedNodeStats.directCount} Direct ({selectedNodeStats.twoHopCount} in 2-Hop)
                 </div>
               </div>
 
+              {/* High Risk Connections */}
               <div className="bg-slate-900/60 p-2 rounded border border-slate-800">
                 <div className="text-[10px] text-slate-500 uppercase flex items-center gap-1">
-                  <Layers className="w-3 h-3 text-slate-400" /> 2-Hop Network
+                  <AlertTriangle className="w-3 h-3 text-amber-400" /> High Risk Links
                 </div>
-                <div className="text-sm font-bold text-slate-200 mt-0.5">
-                  {twoHopNeighbors.size} Connected
+                <div className="text-sm font-bold text-rose-400 mt-0.5">
+                  {selectedNodeStats.highRiskCount} Risky Neighbors
                 </div>
               </div>
 
+              {/* Syndicate Cluster */}
               <div className="bg-slate-900/60 p-2 rounded border border-slate-800">
-                <div className="text-[10px] text-slate-500 uppercase">Syndicate</div>
-                <div className="text-xs font-bold text-rose-400 mt-0.5 truncate">
-                  {activeSelected.muleCluster || 'Isolated'}
+                <div className="text-[10px] text-slate-500 uppercase flex items-center gap-1">
+                  <Layers className="w-3 h-3 text-slate-400" /> Syndicate
+                </div>
+                <div className="text-xs font-bold text-amber-300 mt-0.5 truncate">
+                  {activeSelected.muleCluster || 'Individual Node'}
                 </div>
               </div>
             </div>
