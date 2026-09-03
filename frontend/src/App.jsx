@@ -3,6 +3,7 @@ import DashboardHeader from './components/DashboardHeader';
 import MetricsBar from './components/MetricsBar';
 import LiveTransactionFeed from './components/LiveTransactionFeed';
 import GraphExplorer from './components/GraphExplorer';
+import AttackSimulator from './components/AttackSimulator';
 import CaseDossierModal from './components/CaseDossierModal';
 import { FileSearch } from 'lucide-react';
 
@@ -21,6 +22,16 @@ export default function App() {
 
   const handleSelectAccount = (accId) => {
     setSelectedAccountId(accId);
+  };
+
+  const handleScenarioRun = (scenario, affectedAccounts) => {
+    if (affectedAccounts && affectedAccounts.length > 0) {
+      setSelectedAccountId(affectedAccounts[0]);
+    }
+  };
+
+  const handleResetSimulation = () => {
+    setSelectedAccountId(null);
   };
 
   return (
@@ -71,6 +82,14 @@ export default function App() {
             </button>
           </div>
         )}
+
+        {/* Component 5: Controlled Attack Simulation Console */}
+        <section aria-label="Demo Risk Injection Console">
+          <AttackSimulator
+            onScenarioRun={handleScenarioRun}
+            onReset={handleResetSimulation}
+          />
+        </section>
       </main>
 
       {/* Case Dossier Forensic Investigation Modal */}
