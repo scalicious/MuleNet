@@ -3,6 +3,8 @@ from app.core.memory_graph import memory_graph
 from app.models.schema import EgoGraphResponse
 
 router = APIRouter(tags=["Graph & Forensics"])
+import logging
+logger = logging.getLogger(__name__)
 
 @router.get("/graph/ego/{account_id}", response_model=EgoGraphResponse)
 async def get_ego_graph(account_id: str, hops: int = 2):
