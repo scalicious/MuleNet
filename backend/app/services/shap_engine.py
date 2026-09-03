@@ -138,3 +138,80 @@ class SHAPExplainabilityEngine:
             feature_values_dict: mapping of feature name → raw value
             top_n             : maximum factors to return
 
+        Returns:
+            list of dicts with keys: feature, impact, explanation
+        """
+        if self.explainer is not None and _SHAP_AVAILABLE:
+            return self._shap_explain(feature_vector, feature_values_dict, top_n)
+        else:
+            return self._fallback_explain(feature_values_dict, top_n)
+
+    # ------------------------------------------------------------------
+    # Private
+    # ------------------------------------------------------------------
+
+    def _shap_explain(
+        self,
+        feature_vector: np.ndarray,
+        feature_values_dict: Dict[str, float],
+        top_n: int
+    ) -> List[Dict[str, Any]]:
+        try:
+            shap_values = self.explainer.shap_values(feature_vector)
+            # For binary classifiers: shap_values is list[2 arrays] or single array
+            if isinstance(shap_values, list):
+                sv = shap_values[1][0]   # class=1 SHAP values
+            else:
+                sv = shap_values[0]
+
+            # Pair with feature names
+            pairs = list(zip(self.FEATURE_ORDER, sv.tolist()))
+            pairs.sort(key=lambda x: abs(x[1]), reverse=True)
+
+            results = []
+            for fname, impact in pairs[:top_n]:
+                raw_val = feature_values_dict.get(fname, 0.0)
+                results.append({
+                    "feature": fname,
+                    "impact": round(float(impact), 4),
+                    "explanation": self._build_explanation(fname, raw_val),
+                })
+            return results
+
+        except Exception as e:
+            print(f"[SHAPEngine] SHAP explain error: {e}")
+            return self._fallback_explain(feature_values_dict, top_n)
+
+    def _fallback_explain(
+        self,
+        feature_values_dict: Dict[str, float],
+        top_n: int
+    ) -> List[Dict[str, Any]]:
+        """
+        When SHAP is unavailable, rank features by raw value magnitude
+        as a proxy for impact.
+        """
+        ranked = sorted(
+            [(k, v) for k, v in feature_values_dict.items() if k in self.FEATURE_ORDER],
+            key=lambda x: abs(x[1]),
+            reverse=True
+        )
+        results = []
+        for fname, raw_val in ranked[:top_n]:
+            results.append({
+                "feature": fname,
+                "impact": round(float(raw_val) * 0.1, 4),  # scaled proxy
+                "explanation": self._build_explanation(fname, raw_val),
+            })
+        return results
+
+    @staticmethod
+    def _build_explanation(feature_name: str, raw_value: float) -> str:
+        template = _FEATURE_EXPLANATIONS.get(feature_name, _DEFAULT_EXPLANATION)
+        try:
+            return template.format(val=raw_value, name=feature_name)
+        except Exception:
+            return _DEFAULT_EXPLANATION.format(name=feature_name, val=raw_value)
+
+
+shap_engine = SHAPExplainabilityEngine()
