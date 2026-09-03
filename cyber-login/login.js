@@ -521,6 +521,34 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetPasswordMsg = document.getElementById('resetPasswordMsg');
 
   let pendingForgotEmail = '';
+  let forgotResendTimer = null;
+  let forgotResendCooldown = 0;
+
+  function startForgotResendCooldown() {
+    if (forgotResendTimer) clearInterval(forgotResendTimer);
+    forgotResendCooldown = 60;
+
+    if (resendForgotOtpBtn) {
+      resendForgotOtpBtn.style.pointerEvents = 'none';
+      resendForgotOtpBtn.style.opacity = '0.5';
+      resendForgotOtpBtn.textContent = `Resend in ${forgotResendCooldown}s`;
+    }
+
+    forgotResendTimer = setInterval(() => {
+      forgotResendCooldown--;
+      if (forgotResendCooldown > 0) {
+        if (resendForgotOtpBtn) resendForgotOtpBtn.textContent = `Resend in ${forgotResendCooldown}s`;
+      } else {
+        clearInterval(forgotResendTimer);
+        forgotResendTimer = null;
+        if (resendForgotOtpBtn) {
+          resendForgotOtpBtn.style.pointerEvents = 'auto';
+          resendForgotOtpBtn.style.opacity = '1';
+          resendForgotOtpBtn.textContent = 'Resend OTP';
+        }
+      }
+    }, 1000);
+  }
 
   if (forgotEmailForm) {
     forgotEmailForm.addEventListener('submit', async (e) => {
@@ -580,6 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (forgotStep2) forgotStep2.style.display = 'block';
           if (forgotOtpInput) forgotOtpInput.value = '';
           clearMsg(forgotOtpMsg);
+          startForgotResendCooldown();
         }
       } catch (err) {
         showMsg(forgotEmailMsg, err.message || 'Failed to dispatch recovery code.', 'error');
@@ -587,6 +616,32 @@ document.addEventListener('DOMContentLoaded', () => {
           sendForgotOtpBtn.disabled = false;
           sendForgotForgotBtnText('SEND RECOVERY CODE');
         }
+      }
+    });
+  }
+
+  // Resend Recovery OTP Handler
+  if (resendForgotOtpBtn) {
+    resendForgotOtpBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (forgotResendCooldown > 0 || !pendingForgotEmail || !supabaseClient) return;
+
+      clearMsg(forgotOtpMsg);
+      startForgotResendCooldown();
+
+      try {
+        const { error } = await supabaseClient.auth.signInWithOtp({
+          email: pendingForgotEmail,
+          options: { shouldCreateUser: false }
+        });
+
+        if (error) {
+          showMsg(forgotOtpMsg, 'Failed to resend recovery code.', 'error');
+        } else {
+          showMsg(forgotOtpMsg, 'New recovery OTP code dispatched.', 'success');
+        }
+      } catch (err) {
+        showMsg(forgotOtpMsg, 'Failed to resend recovery code.', 'error');
       }
     });
   }
