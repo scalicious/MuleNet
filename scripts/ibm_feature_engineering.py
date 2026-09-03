@@ -153,3 +153,88 @@ def extract_node_and_edge_features(trans_path: str, entity_map: dict):
         out_formats, out_currencies, out_timestamps, laundering_nodes
     )
 
+
+def compute_engineered_records(
+    out_amounts, in_amounts, out_receivers, in_senders,
+    out_formats, out_currencies, out_timestamps, laundering_nodes, entity_map
+):
+    """
+    Computes calibrated, non-overfitting behavioural feature vectors for every node.
+    """
+    print("[3/5] Engineering account-level behavioural & topological features ...")
+    
+    all_nodes = set(out_amounts.keys()) | set(in_amounts.keys())
+    print(f"      Total unique entities: {len(all_nodes):,}")
+    
+    records = []
+    
+    for nid in all_nodes:
+        # Degree & counterparty features
+        s_amounts = out_amounts.get(nid, [])
+        r_amounts = in_amounts.get(nid, [])
+        
+        out_deg = len(s_amounts)
+        in_deg  = len(r_amounts)
+        tot_deg = out_deg + in_deg
+        
+        uniq_receivers = len(out_receivers.get(nid, set()))
+        uniq_senders   = len(in_senders.get(nid, set()))
+        tot_cp         = uniq_receivers + uniq_senders
+        
+        in_deg_ratio  = in_deg / max(1.0, tot_deg)
+        out_deg_ratio = out_deg / max(1.0, tot_deg)
+        log_tot_deg   = math.log1p(tot_deg)
+        
+        # Cash flow volume & imbalance
+        tot_inflow  = sum(r_amounts)
+        tot_outflow = sum(s_amounts)
+        net_flow    = tot_inflow - tot_outflow
+        tot_vol     = tot_inflow + tot_outflow
+        flow_imbalance = abs(tot_inflow - tot_outflow) / max(1.0, tot_vol)
+        
+        # Statistical moments on outgoing amounts
+        if s_amounts:
+            mean_out = statistics.mean(s_amounts)
+            std_out  = statistics.stdev(s_amounts) if len(s_amounts) > 1 else 0.0
+            max_out  = max(s_amounts)
+            cv_out   = std_out / max(1.0, mean_out)
+        else:
+            mean_out, std_out, max_out, cv_out = 0.0, 0.0, 0.0, 0.0
+            
+        # Statistical moments on incoming amounts
+        if r_amounts:
+            mean_in = statistics.mean(r_amounts)
+            max_in  = max(r_amounts)
+        else:
+            mean_in, max_in = 0.0, 0.0
+
+        # Fan-in / Fan-out velocity proxy
+        fan_ratio = (in_deg + 1.0) / (out_deg + 1.0)
+        
+        # Payment format distribution & entropy
+        fmts = out_formats.get(nid, {})
+        fmt_total = sum(fmts.values())
+        ach_count = fmts.get("ACH", 0)
+        ach_ratio = ach_count / max(1.0, fmt_total)
+        
+        fmt_entropy = 0.0
+        if fmt_total > 0:
+            for count in fmts.values():
+                p = count / fmt_total
+                if p > 0:
+                    fmt_entropy -= p * math.log2(p)
+                    
+        # High-risk currency exposure ratio
+        currs = out_currencies.get(nid, {})
+        curr_total = sum(currs.values())
+        high_risk_count = sum(currs.get(c, 0) for c in HIGH_RISK_CURRENCIES)
+        high_risk_curr_ratio = high_risk_count / max(1.0, curr_total)
+        
+        # Structuring pattern indicator (amounts in $9,000 - $9,999 smurfing bracket)
+        struct_count = sum(1 for a in s_amounts if 9000.0 <= a <= 9999.99)
+        struct_ratio = struct_count / max(1.0, out_deg)
+        
+        # Temporal velocity / Burstiness
+        timestamps = sorted(out_timestamps.get(nid, []))
+        burst_score = 1
+        if len(timestamps) >= 2:
