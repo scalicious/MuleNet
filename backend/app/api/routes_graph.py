@@ -65,3 +65,25 @@ async def get_ego_graph(account_id: str, hops: int = 2, target_id: Optional[str]
                     attention_map[f"{src}|{dst}"] = weight
 
     logger.debug(f"Parsed {len(attention_map)} attention edges from GAT.")
+
+    # 4. Enrich links with parsed attention
+    enriched_links = []
+    for link in ego_data.get("links", []):
+        src = link.get("source")
+        dst = link.get("target")
+        
+        # Check both directed and undirected matching
+        attn = attention_map.get(f"{src}|{dst}", 
+               attention_map.get(f"{dst}|{src}", 0.05))
+               
+        # Boost visualization flag for high attention
+        is_risky = link.get("is_risky", False) or attn > 0.70
+        
+        link["gat_attention"] = attn
+        link["is_risky"] = is_risky
+        enriched_links.append(link)
+        
+    ego_data["links"] = enriched_links
+    
+    logger.info(f"Successfully enriched {len(enriched_links)} links with GAT attention.")
+    return ego_data
