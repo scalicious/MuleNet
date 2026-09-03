@@ -143,3 +143,83 @@ def train_xgboost_sequence_lens(df: pd.DataFrame):
     shap_vals = explainer.shap_values(X_test.iloc[:200])
     print("  SHAP TreeExplainer initialized and validated successfully.")
     
+    # Write metadata sidecar
+    meta = {
+        "feature_order": feature_cols,
+        "n_estimators": 250,
+        "max_depth": 5,
+        "learning_rate": 0.04,
+        "roc_auc": round(float(roc), 4),
+        "pr_auc": round(float(pr_auc), 4),
+        "dataset": "IBM-HI-Small"
+    }
+    meta_path = os.path.join(ARTIFACTS_DIR, "sequence_model_meta.json")
+    with open(meta_path, "w") as f:
+        json.dump(meta, f, indent=2)
+    print(f"  Exported metadata sidecar -> {meta_path}")
+
+
+def train_isolation_forest_anomaly_lens(df: pd.DataFrame):
+    """
+    Trains unsupervised Isolation Forest to detect novel transaction structuring anomalies.
+    """
+    print("\n=== [Person 3] Training Unsupervised Anomaly Engine ===")
+    iso_cols = ["flow_imbalance", "ach_payment_ratio", "structuring_ratio", "cv_out_amount", "burst_score"]
+    
+    X_iso = df[iso_cols].fillna(0.0).values
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X_iso)
+    
+    iso_forest = IsolationForest(
+        n_estimators=150,
+        contamination=0.03,
+        max_samples="auto",
+        random_state=42,
+        n_jobs=-1
+    )
+    iso_forest.fit(X_scaled)
+    
+    scaler_out = os.path.join(ARTIFACTS_DIR, "anomaly_scaler.joblib")
+    iso_out    = os.path.join(ARTIFACTS_DIR, "isolation_forest.joblib")
+    
+    joblib.dump(scaler, scaler_out)
+    joblib.dump(iso_forest, iso_out)
+    print(f"  Exported Scaler -> {scaler_out}")
+    print(f"  Exported IsolationForest -> {iso_out}")
+
+
+class MuleGATModel(nn.Module):
+    """
+    2-Layer Graph Attention Network (GAT) with attention coefficient extraction.
+    """
+    def __init__(self, in_channels: int = 16, hidden_channels: int = 32, out_channels: int = 2, heads: int = 4):
+        super().__init__()
+        self.conv1 = GATConv(in_channels, hidden_channels, heads=heads, concat=True, dropout=0.15)
+        self.bn1   = nn.BatchNorm1d(hidden_channels * heads)
+        self.conv2 = GATConv(hidden_channels * heads, out_channels, heads=1, concat=False, dropout=0.15)
+        
+    def forward(self, x, edge_index, return_attention_weights=False):
+        if return_attention_weights:
+            x_out, (ei1, a1) = self.conv1(x, edge_index, return_attention_weights=True)
+            x_out = self.bn1(x_out) if x_out.size(0) > 1 else x_out
+            x_out = F.elu(x_out)
+            x_out = F.dropout(x_out, p=0.15, training=self.training)
+            logits, (ei2, a2) = self.conv2(x_out, edge_index, return_attention_weights=True)
+            return logits, (ei2, a2)
+        else:
+            x_out = self.conv1(x, edge_index)
+            x_out = self.bn1(x_out) if x_out.size(0) > 1 else x_out
+            x_out = F.elu(x_out)
+            x_out = F.dropout(x_out, p=0.15, training=self.training)
+            return self.conv2(x_out, edge_index)
+
+
+def train_gat_network_lens(df: pd.DataFrame):
+    """
+    Trains 2-Layer GAT network lens using Subgraph representations.
+    """
+    print("\n=== [Person 2] Training GAT Network Lens on Graph Neighborhoods ===")
+    
+    # 16-dim feature alignment matching SubgraphExtractor
+    gat_cols = [
+        "in_degree_ratio", "out_degree_ratio", "log_total_degree", "flow_imbalance",
