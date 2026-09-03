@@ -29,6 +29,7 @@ async def score_action(payload: ScoreRequest, db: Session = Depends(get_session)
     strictly before the action timestamp. Does NOT write to the transaction graph.
     """
     txn_id = f"TXN-{uuid.uuid4().hex[:6].upper()}"
+    logger.info(f"Incoming scoring request for {txn_id}: {payload.account_id} -> {payload.counterparty_id}")
 
     # PRE-COMMITMENT RULE: Fetch history < T from SQLite
     from sqlmodel import select
