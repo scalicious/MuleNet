@@ -243,3 +243,78 @@ class SequenceRiskEngine:
         # ----------------------------------------------------------------
         # 8. Degree-based graph features
         # ----------------------------------------------------------------
+        n_txns    = len(prior_txns)
+        in_count  = sum(1 for t in prior_txns if t.get("receiver_id") == account_id)
+        out_count = sum(1 for t in prior_txns if t.get("sender_id")   == account_id)
+        total_deg = in_count + out_count + 1  # +1 for the current pending txn
+
+        in_degree_ratio      = in_count  / max(1, total_deg)
+        out_degree_ratio     = out_count / max(1, total_deg)
+        log_total_degree     = float(np.log1p(total_deg))
+        degree_vs_time_mean  = min(10.0, float(n_txns + 1))
+
+        # ----------------------------------------------------------------
+        # 9. Extreme feature co-occurrence counts
+        #    Captures multi-dimensional risk signals that individually
+        #    may not trigger rules but jointly indicate fraud.
+        # ----------------------------------------------------------------
+        risk_flags_2 = [
+            1 if flow_imbalance   > 0.80 else 0,
+            1 if amount_zscore    > 2.5  else 0,
+            1 if logins_1h        >= 3   else 0,
+            1 if dormancy_flag    > 0    else 0,
+            1 if setup_gap_minutes < 30  else 0,
+            1 if new_device_flag  > 0    else 0,
+            1 if payee_added_flag > 0    else 0,
+        ]
+        extreme_feature_count_2 = float(sum(risk_flags_2))
+
+        risk_flags_3 = [
+            1 if flow_imbalance > 0.90 else 0,
+            1 if amount_zscore  > 3.5  else 0,
+            1 if logins_1h      >= 5   else 0,
+        ]
+        extreme_feature_count_3 = float(sum(risk_flags_3))
+
+        # ----------------------------------------------------------------
+        # 10. Fan-in/out ratio — session velocity proxy
+        # ----------------------------------------------------------------
+        fan_in_out_ratio = min(5.0, (logins_1h + 1.0) / 2.0)
+
+        return {
+            "setup_gap_minutes":       setup_gap_minutes,
+            "logins_1h":               float(logins_1h),
+            "logins_24h":              float(logins_24h),
+            "new_device_flag":         new_device_flag,
+            "payee_added_flag":        payee_added_flag,
+            "amount_zscore":           amount_zscore,
+            "dormancy_flag":           dormancy_flag,
+            "flow_imbalance":          flow_imbalance,
+            "fan_in_out_ratio":        fan_in_out_ratio,
+            "degree_vs_time_mean":     degree_vs_time_mean,
+            "in_degree_ratio":         in_degree_ratio,
+            "out_degree_ratio":        out_degree_ratio,
+            "log_total_degree":        log_total_degree,
+            "extreme_feature_count_2": extreme_feature_count_2,
+            "extreme_feature_count_3": extreme_feature_count_3,
+            "feature_mean":            float(amount / 10000.0),
+            "feature_std":             float(amount_zscore),
+        }
+
+    # ------------------------------------------------------------------
+    # Scoring
+    # ------------------------------------------------------------------
+
+    def score_sequence(
+        self,
+        account_id: str,
+        amount: float,
+        as_of_timestamp: str,
+        events: List[Dict[str, Any]],
+        historical_txns: List[Dict[str, Any]]
+    ) -> Tuple[float, List[Dict[str, Any]]]:
+        """
+        Scores sequence risk for a pending transaction.
+
+        Returns:
+            (sequence_risk_score ∈ [0,1], list of forensic factor dicts)
