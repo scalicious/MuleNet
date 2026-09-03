@@ -318,3 +318,78 @@ class SequenceRiskEngine:
 
         Returns:
             (sequence_risk_score ∈ [0,1], list of forensic factor dicts)
+
+        Factor dict schema:
+            feature     : str   — feature name
+            impact      : float — SHAP value or rule boost magnitude
+            explanation : str   — investigator-readable explanation
+        """
+        feats = self.extract_features(
+            account_id, amount, as_of_timestamp, events, historical_txns
+        )
+
+        # ---- Build feature vector in training column order ----
+        feature_vector = np.array([[
+            feats["flow_imbalance"],
+            feats["fan_in_out_ratio"],
+            feats["degree_vs_time_mean"],
+            feats["in_degree_ratio"],
+            feats["out_degree_ratio"],
+            feats["log_total_degree"],
+            feats["extreme_feature_count_2"],
+            feats["extreme_feature_count_3"],
+            feats["feature_mean"],
+            feats["feature_std"],
+        ]])
+
+        # ---- XGBoost inference ----
+        model_prob = None
+        if self.model is not None:
+            try:
+                probs      = self.model.predict_proba(feature_vector)[0]
+                model_prob = float(probs[1]) if len(probs) > 1 else float(probs[0])
+            except Exception as e:
+                logger.error(f"[SequenceRiskEngine] XGBoost predict error: {e}")
+
+        score = model_prob if model_prob is not None else 0.05
+
+        # ---- SHAP attribution ----
+        shap_factors = shap_engine.explain(
+            feature_vector=feature_vector,
+            feature_values_dict=feats,
+            top_n=4
+        )
+        factors: List[Dict[str, Any]] = [
+            {
+                "feature":     sf["feature"],
+                "impact":      sf["impact"],
+                "explanation": sf["explanation"],
+            }
+            for sf in shap_factors
+        ]
+
+        # ----------------------------------------------------------------
+        # Hard-rule safety-net boosts
+        # Applied on top of XGB score to catch extreme edge cases that
+        # might fall below the ML threshold at inference time.
+        # Each boost is capped to prevent trivial saturation.
+        # ----------------------------------------------------------------
+
+        # Rule 1: Credential change → transfer in < 5 minutes (critical ATO)
+        if feats["setup_gap_minutes"] < SETUP_GAP_CRITICAL_MINUTES:
+            score = max(score, min(0.98, score + 0.50))
+            if not any(f["feature"] == "setup_gap_minutes" for f in factors):
+                factors.insert(0, {
+                    "feature": "setup_to_action_gap",
+                    "impact":  0.50,
+                    "explanation": (
+                        f"CRITICAL: Credential or payee change occurred "
+                        f"{int(feats['setup_gap_minutes'] * 60)}s before this transfer. "
+                        "Sub-5-minute setup-to-action gap is the strongest known ATO indicator."
+                    ),
+                })
+        elif feats["setup_gap_minutes"] < SETUP_GAP_HIGH_MINUTES:
+            score = max(score, min(0.98, score + 0.25))
+
+        # Rule 2: Statistically extreme transfer amount
+        if feats["amount_zscore"] > AMOUNT_ZSCORE_HIGH:
