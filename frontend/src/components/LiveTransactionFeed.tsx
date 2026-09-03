@@ -1,24 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Activity } from 'lucide-react';
+import { connectTransactionStream, StreamTransaction } from '../services/streamService';
 
-interface Transaction {
-  id: string;
-  time: string;
-  sender: string;
-  receiver: string;
-  amount: string;
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  isNew?: boolean;
-}
-
-const RISK_BADGE_STYLES: Record<Transaction['riskLevel'], string> = {
+const RISK_BADGE_STYLES: Record<StreamTransaction['riskLevel'], string> = {
   LOW: 'text-emerald-400 bg-emerald-950/40 border-emerald-800/50',
   MEDIUM: 'text-yellow-400 bg-yellow-950/40 border-yellow-800/50',
   HIGH: 'text-orange-400 bg-orange-950/40 border-orange-800/50',
   CRITICAL: 'text-red-400 bg-red-950/40 border-red-800/50',
 };
 
-const INITIAL_TRANSACTIONS: Transaction[] = [
+const INITIAL_TRANSACTIONS: StreamTransaction[] = [
   { id: 'tx-1', time: '12:42:18', sender: 'ACC-1042', receiver: 'ACC-8821', amount: '$84,920', riskLevel: 'CRITICAL' },
   { id: 'tx-2', time: '12:41:52', sender: 'ACC-2931', receiver: 'ACC-7734', amount: '$18,200', riskLevel: 'HIGH' },
   { id: 'tx-3', time: '12:41:20', sender: 'ACC-8821', receiver: 'ACC-9012', amount: '$3,100', riskLevel: 'MEDIUM' },
@@ -29,57 +20,17 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
   { id: 'tx-8', time: '12:39:12', sender: 'ACC-7734', receiver: 'ACC-6105', amount: '$9,800', riskLevel: 'MEDIUM' },
 ];
 
-const MOCK_ACCOUNTS = [
-  'ACC-1042', 'ACC-8821', 'ACC-2931', 'ACC-7734', 'ACC-9012',
-  'ACC-1022', 'ACC-5419', 'ACC-3820', 'ACC-6105', 'ACC-4491',
-  'ACC-9204', 'ACC-3140', 'ACC-7218', 'ACC-5093'
-];
-
-const MOCK_AMOUNTS = [
-  '$650', '$1,200', '$3,850', '$7,400', '$12,900', '$18,500',
-  '$24,600', '$47,300', '$89,200', '$142,000', '$210,500'
-];
-
-const RISK_TIERS: Transaction['riskLevel'][] = [
-  'LOW', 'LOW', 'MEDIUM', 'LOW', 'HIGH', 'CRITICAL', 'MEDIUM', 'HIGH'
-];
-
-function generateMockTransaction(): Transaction {
-  const now = new Date();
-  const time = now.toTimeString().split(' ')[0];
-  
-  const senderIdx = Math.floor(Math.random() * MOCK_ACCOUNTS.length);
-  let receiverIdx = Math.floor(Math.random() * MOCK_ACCOUNTS.length);
-  while (receiverIdx === senderIdx) {
-    receiverIdx = Math.floor(Math.random() * MOCK_ACCOUNTS.length);
-  }
-
-  const sender = MOCK_ACCOUNTS[senderIdx];
-  const receiver = MOCK_ACCOUNTS[receiverIdx];
-  const amount = MOCK_AMOUNTS[Math.floor(Math.random() * MOCK_AMOUNTS.length)];
-  const riskLevel = RISK_TIERS[Math.floor(Math.random() * RISK_TIERS.length)];
-
-  return {
-    id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-    time,
-    sender,
-    receiver,
-    amount,
-    riskLevel,
-    isNew: true,
-  };
-}
-
 export default function LiveTransactionFeed() {
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [transactions, setTransactions] = useState<StreamTransaction[]>(INITIAL_TRANSACTIONS);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const newTx = generateMockTransaction();
+    const unsubscribe = connectTransactionStream((newTx) => {
       setTransactions((prev) => [newTx, ...prev.slice(0, 8)]);
-    }, 3000);
+    });
 
-    return () => clearInterval(interval);
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   return (
