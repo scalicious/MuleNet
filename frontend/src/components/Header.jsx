@@ -1,39 +1,36 @@
 import React from 'react';
-import { Shield, Activity, RefreshCw } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
-export default function Header({ isStreaming, onToggleStream, onOpenTester }) {
+export default function Header() {
   return (
-    <header className="bg-surface border-b border-border px-6 py-4 flex items-center justify-between">
-      <div className="flex items-center space-x-3">
-        <div className="bg-blue-600/20 p-2 rounded-lg border border-blue-500/30">
-          <Shield className="w-6 h-6 text-blue-400" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-white tracking-wide">MuleNet</h1>
-          <p className="text-xs text-gray-400">Pre-Commitment AML Risk Intelligence Platform</p>
-        </div>
-      </div>
+    <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 gap-3">
+          {/* Brand Identity */}
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center text-cyan-600 shrink-0">
+              <Shield className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 uppercase font-sans">
+                PRE-COMMITMENT RISK INTELLIGENCE
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 font-normal">
+                Real-time transaction risk monitoring
+              </p>
+            </div>
+          </div>
 
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={onOpenTester}
-          className="px-3 py-1.5 text-xs font-medium rounded-md bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition"
-        >
-          Manual Scoring Test
-        </button>
-
-        <div className="flex items-center space-x-2 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-full">
-          <span className={`w-2.5 h-2.5 rounded-full ${isStreaming ? 'bg-green-400 animate-pulse' : 'bg-gray-500'}`} />
-          <span className="text-xs font-medium text-gray-300">
-            {isStreaming ? 'STREAM ACTIVE' : 'STREAM PAUSED'}
-          </span>
-          <button
-            onClick={onToggleStream}
-            className="ml-2 text-gray-400 hover:text-white transition"
-            title="Toggle Live Stream"
-          >
-            <Activity className="w-4 h-4" />
-          </button>
+          {/* Status Indicator */}
+          <div className="flex items-center self-end sm:self-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-mono font-medium tracking-wide">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+              </span>
+              <span>SYSTEM LIVE</span>
+            </div>
+          </div>
         </div>
       </div>
     </header>
