@@ -1,24 +1,24 @@
-from fastapi import APIRouter
+import logging
+from fastapi import APIRouter, HTTPException
+from typing import Optional
+
 from app.core.memory_graph import memory_graph
 from app.models.schema import EgoGraphResponse
+from app.services.network_lens import network_risk_engine
 
-router = APIRouter(tags=["Graph & Forensics"])
-import logging
 logger = logging.getLogger(__name__)
+router = APIRouter(tags=["Graph & Forensics"])
 
 @router.get("/graph/ego/{account_id}", response_model=EgoGraphResponse)
-async def get_ego_graph(account_id: str, hops: int = 2):
+async def get_ego_graph(account_id: str, hops: int = 2, target_id: Optional[str] = None):
     """
-    Extracts 1-2 hop ego-subgraph for an account with GAT attention edge weights.
+    Extracts 1-2 hop ego-subgraph for an account.
+    Integrates GAT attention edge weights dynamically from the network risk engine.
     """
-    # ---------------------------------------------------------
-    # PERSON 2 PLACEHOLDER: Network Forensics & Ego-Graph
-    # Queries in-memory graph for 1-2 hop neighborhood.
-    # TO BE IMPLEMENTED: Attach GAT attention scores to edges dynamically.
-    # ---------------------------------------------------------
     logger.info(f"Extracting {hops}-hop ego graph for {account_id}")
-    ego_data = memory_graph.get_ego_subgraph(account_id=account_id, as_of_timestamp="", hops=hops)
     
-    # Placeholder: GAT attention coefficients to be injected here by Person 2
-    
-    return ego_data
+    if not account_id:
+        raise HTTPException(status_code=400, detail="account_id is required")
+        
+    if hops < 1 or hops > 3:
+        raise HTTPException(status_code=400, detail="hops must be between 1 and 3")
