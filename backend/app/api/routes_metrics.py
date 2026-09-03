@@ -15,6 +15,7 @@ async def get_platform_metrics(db: Session = Depends(get_session)):
     """
     # 1. Total Scored Actions
     total_actions = db.exec(select(func.count(DecisionLogEntity.id))).one()
+    logger.debug(f'Total actions fetched: {total_actions}')
     if total_actions == 0:
         return MetricsResponse(
             prevented_loss_value=0.0,
