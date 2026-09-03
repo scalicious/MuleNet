@@ -128,3 +128,40 @@ def train_and_export_all_models():
                 dst_list.append(t)
     
     edge_index = torch.tensor([src_list, dst_list], dtype=torch.long)
+    node_labels = torch.randint(0, 2, (num_nodes,), dtype=torch.long)
+
+    gat_model = MuleGATModel(in_channels=gat_features, hidden_channels=32, out_channels=2, heads=2)
+    optimizer = torch.optim.Adam(gat_model.parameters(), lr=0.01, weight_decay=5e-4)
+    criterion = nn.CrossEntropyLoss()
+
+    gat_model.train()
+    for epoch in range(50):
+        optimizer.zero_grad()
+        out = gat_model(x_nodes, edge_index)
+        loss = criterion(out, node_labels)
+        loss.backward()
+        optimizer.step()
+    
+    print(f"GAT Model trained 50 epochs. Final loss: {loss.item():.4f}")
+
+    gat_model.eval()
+    for ad in artifacts_dirs:
+        torch.save(gat_model.state_dict(), os.path.join(ad, "mule_gat_model.pt"))
+
+    # 3. Isolation Forest Anomaly Detector
+    print("=== 4. Training Isolation Forest Anomaly Model ===")
+    scaler = StandardScaler()
+    anomaly_feats = df_sample[["degree_vs_time_mean", "flow_imbalance", "log_total_degree"]].fillna(0.0).values
+    anomaly_feats_scaled = scaler.fit_transform(anomaly_feats)
+
+    iso_forest = IsolationForest(n_estimators=100, contamination=0.05, random_state=42)
+    iso_forest.fit(anomaly_feats_scaled)
+
+    for ad in artifacts_dirs:
+        joblib.dump(iso_forest, os.path.join(ad, "isolation_forest.joblib"))
+        joblib.dump(scaler, os.path.join(ad, "anomaly_scaler.joblib"))
+
+    print("=== All Models and Artifacts Successfully Exported! ===")
+
+if __name__ == "__main__":
+    train_and_export_all_models()
