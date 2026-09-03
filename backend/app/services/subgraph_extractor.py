@@ -118,3 +118,54 @@ class SubgraphExtractor:
             log_td = float(np.log1p(td))
             fi     = abs(inf - ouf) / max(1.0, tot)
             fanio  = float(in_degree[i]) / max(1.0, float(out_degree[i]))
+
+            amts = amounts[i]
+            amt_mean = float(np.mean(amts)) / 10000.0 if amts else 0.0
+            amt_std  = float(np.std(amts))  / 10000.0 if len(amts) > 1 else 0.0
+            max_amt  = float(max(amts))     / 100000.0 if amts else 0.0
+
+            mean_attn = float(np.mean(edge_attn[i])) if edge_attn[i] else 0.5
+            total_edges = max(1.0, td)
+            risky_frac  = float(risky_count[i]) / total_edges
+
+            ext2 = sum([
+                1 if fi > 0.80 else 0,
+                1 if in_r > 0.85 or out_r > 0.85 else 0,
+                1 if td > 5 else 0,
+            ])
+            ext3 = sum([
+                1 if fi > 0.90 else 0,
+                1 if mean_attn > 0.80 else 0,
+            ])
+
+            is_focus = 1.0 if node_ids[i] == focus_account_id else 0.0
+            btwn     = td / max_degree
+
+            X[i] = [
+                in_r, out_r, log_td, fi, min(5.0, fanio),
+                min(10.0, td), float(ext2), float(ext3),
+                amt_mean, amt_std, is_focus, mean_attn,
+                max_amt, float(risky_count[i] > 0), risky_frac, btwn
+            ]
+
+        # ---- Edge index ----
+        if edge_src:
+            edge_index = torch.tensor(
+                [edge_src, edge_dst], dtype=torch.long
+            )
+        else:
+            # Self-loops on all nodes (fully disconnected fallback)
+            idx = list(range(n))
+            edge_index = torch.tensor([idx, idx], dtype=torch.long)
+
+        focus_idx = node_idx.get(focus_account_id, 0)
+
+        pyg_data = Data(
+            x=torch.tensor(X, dtype=torch.float32),
+            edge_index=edge_index
+        )
+
+        return pyg_data, focus_idx, node_ids
+
+
+subgraph_extractor = SubgraphExtractor()
