@@ -26,7 +26,7 @@ class TransactionEntity(SQLModel, table=True):
     currency: str
     payment_format: str
     timestamp: str = Field(index=True)
-    is_laundering_ground_truth: int = Field(default=0)
+    is_laundering_ground_truth: int = Field(default=0, description="1 if part of known laundering ring")
 
 class DecisionLogEntity(SQLModel, table=True):
     __tablename__ = "decisions_log"
