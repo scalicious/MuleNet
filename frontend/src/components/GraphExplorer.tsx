@@ -26,7 +26,7 @@ export default function GraphExplorer({
   const containerRef = useRef<HTMLDivElement>(null);
   const fgRef = useRef<ForceGraphMethods>(null);
 
-  const [dimensions, setDimensions] = useState({ width: 800, height: 480 });
+  const [dimensions, setDimensions] = useState({ width: 800, height: 560 });
   const [internalSelectedNode, setInternalSelectedNode] = useState<GraphNode | null>(null);
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -40,21 +40,33 @@ export default function GraphExplorer({
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
-  // Responsive dimensions handler
+  // Responsive dimensions handler with ResizeObserver
   useEffect(() => {
-    const updateSize = () => {
+    if (!containerRef.current) return;
+
+    const updateDimensions = () => {
       if (containerRef.current) {
         const { clientWidth, clientHeight } = containerRef.current;
         setDimensions({
           width: clientWidth || 800,
-          height: clientHeight >= 420 ? clientHeight : 480,
+          height: clientHeight >= 380 ? clientHeight : 560,
         });
       }
     };
 
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
+    updateDimensions();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateDimensions();
+    });
+
+    resizeObserver.observe(containerRef.current);
+    window.addEventListener('resize', updateDimensions);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateDimensions);
+    };
   }, []);
 
   // Compute adjacency for 2-hop neighborhoods
@@ -207,7 +219,7 @@ export default function GraphExplorer({
       ctx.lineWidth = 1.2 / globalScale;
       ctx.stroke();
 
-      // Intelligent Text Label: Rendered for focused, hovered, critical, or when zoomed in
+      // Intelligent Text Label
       const shouldShowLabel = isFocused || node === hoveredNode || node.riskTier === 'CRITICAL' || globalScale > 1.8;
       if (shouldShowLabel && !isDimmed) {
         const label = node.id;
@@ -237,25 +249,25 @@ export default function GraphExplorer({
   );
 
   return (
-    <div className="w-full bg-[#0d131f] border border-[#1f293d] rounded-lg overflow-hidden flex flex-col shadow-sm">
+    <div className="w-full h-full bg-[#0d131f] border border-[#1f293d] rounded-lg overflow-hidden flex flex-col shadow-sm">
       {/* Header Bar */}
-      <div className="px-4 sm:px-6 py-3.5 border-b border-[#1f293d] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0b0f17]/70">
+      <div className="px-4 sm:px-6 py-3.5 border-b border-[#1f293d] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0b0f17]/70 shrink-0">
         <div className="flex items-center space-x-2.5">
           <div className="w-8 h-8 rounded-lg bg-indigo-950/40 border border-indigo-800/40 flex items-center justify-center text-indigo-400 shrink-0">
             <Network className="w-4 h-4" />
           </div>
           <div>
             <h2 className="text-xs sm:text-sm font-bold tracking-wider uppercase text-slate-100 font-sans">
-              GRAPH EXPLORER • 2-HOP TRANSACTION NETWORK
+              INTERACTIVE RISK GRAPH • 2-HOP TOPOLOGY
             </h2>
             <p className="text-[11px] text-slate-400 font-mono">
-              Topology mapping of accounts, mule rings & transaction routing
+              Graph neural network attention topology of accounts, mule syndicates & routing
             </p>
           </div>
         </div>
 
         {/* Controls & Legend */}
-        <div className="flex items-center flex-wrap gap-2.5 self-start sm:self-center">
+        <div className="flex items-center flex-wrap gap-2 self-start sm:self-center">
           {/* Risk Legend */}
           <div className="flex items-center gap-2 px-2.5 py-1 rounded border border-slate-800 bg-slate-900/60 text-[10px] font-mono font-medium">
             <span className="text-slate-500 uppercase text-[9px]">TIERS:</span>
@@ -280,7 +292,7 @@ export default function GraphExplorer({
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium border border-slate-700/80 bg-slate-800/60 text-slate-200 hover:bg-slate-700/80 hover:text-white transition"
           >
             <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Fit Network</span>
+            <span className="hidden sm:inline">Fit Network</span>
           </button>
 
           {/* Reset Focus Button */}
@@ -290,14 +302,14 @@ export default function GraphExplorer({
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium border border-slate-700/80 bg-slate-800/60 text-slate-200 hover:bg-slate-700/80 hover:text-white transition"
           >
             <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-            <span>Reset Focus</span>
+            <span className="hidden sm:inline">Reset</span>
           </button>
         </div>
       </div>
 
       {/* Network Statistics Bar */}
-      <div className="px-4 sm:px-6 py-2 bg-[#090d15] border-b border-[#1f293d]/80 flex items-center justify-between flex-wrap gap-3 text-xs font-mono">
-        <div className="flex items-center space-x-4 sm:space-x-6 text-[11px]">
+      <div className="px-4 sm:px-6 py-2 bg-[#090d15] border-b border-[#1f293d]/80 flex items-center justify-between flex-wrap gap-3 text-xs font-mono shrink-0">
+        <div className="flex items-center space-x-3 sm:space-x-5 text-[11px]">
           <div className="flex items-center gap-1.5">
             <span className="text-slate-500 uppercase">Nodes:</span>
             <span className="font-bold text-slate-200">148</span>
@@ -323,7 +335,7 @@ export default function GraphExplorer({
       </div>
 
       {/* Main Canvas & Overlay Area */}
-      <div className="relative w-full h-[480px] bg-[#090d15]" ref={containerRef}>
+      <div className="relative flex-1 w-full min-h-[420px] sm:min-h-[500px] lg:min-h-[560px] bg-[#090d15]" ref={containerRef}>
         <ForceGraph2D
           ref={fgRef}
           width={dimensions.width}

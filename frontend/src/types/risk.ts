@@ -6,28 +6,6 @@ export type RiskTier = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export type EnforcementStatus = 'ALLOWED' | 'FLAGGED' | 'CHALLENGED' | 'BLOCKED';
 
-export type SimulationScenario = 'ACCOUNT_TAKEOVER' | 'SMURFING' | 'MULE_RING';
-
-export type SimulationStage = 
-  | 'IDLE'
-  | 'INITIALIZING'
-  | 'INJECTING_EVENTS'
-  | 'ANALYZING'
-  | 'RISK_DETECTED'
-  | 'MITIGATION_RECOMMENDED';
-
-export interface SimulationDetails {
-  scenario: SimulationScenario;
-  stage: SimulationStage;
-  statusText: string;
-  affectedAccounts: string[];
-  transactionsGenerated: number;
-  riskIncrease: number;
-  detectionScore: number;
-  detectionTier: RiskTier;
-  mitigationSummary: string;
-}
-
 export interface Transaction {
   id: string;
   timestamp: string;
