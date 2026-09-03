@@ -57,3 +57,48 @@ class ExplainabilityEngine:
             return f"{base} (Context Signal)"
             
         return default
+
+    @classmethod
+    def format_explanations(
+        cls,
+        sequence_factors: List[Dict[str, Any]],
+        network_factors: List[Dict[str, Any]],
+        context_factors: List[Dict[str, Any]]
+    ) -> List[ShapFactor]:
+        """
+        Aggregates, sorts, deduplicates, and formats all cross-lens risk factors.
+        """
+        all_factors = sequence_factors + network_factors + context_factors
+        if not all_factors:
+            return []
+            
+        # Deduplicate by feature name keeping highest impact
+        deduped = {}
+        for factor in all_factors:
+            feat_name = factor.get("feature", factor.get("signal", "unknown"))
+            impact = float(factor.get("impact", factor.get("weight", 0.0)))
+            
+            if feat_name not in deduped or abs(impact) > abs(deduped[feat_name].get("impact", 0.0)):
+                factor["impact"] = impact
+                deduped[feat_name] = factor
+                
+        # Sort by absolute impact descending
+        sorted_factors = sorted(deduped.values(), key=lambda x: abs(x.get("impact", 0.0)), reverse=True)
+
+        results = []
+        for f in sorted_factors[:5]:
+            feat_name = f.get("feature", f.get("signal", "unknown"))
+            impact = float(f.get("impact", f.get("weight", 0.0)))
+            default_exp = f.get("explanation", "Contributing risk factor.")
+            
+            human_exp = cls._map_feature_to_sentence(feat_name, impact, default_exp)
+            
+            results.append(ShapFactor(
+                feature=feat_name,
+                impact=round(impact, 3),
+                explanation=human_exp
+            ))
+            
+        return results
+
+explainability_engine = ExplainabilityEngine()
