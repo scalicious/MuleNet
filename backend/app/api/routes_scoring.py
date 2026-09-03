@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session
 import uuid
+import logging
+logger = logging.getLogger(__name__)
 from datetime import datetime
 
 from app.models.schema import ScoreRequest, ScoreResponse, CommitRequest, CommitResponse, LensScores
