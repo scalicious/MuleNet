@@ -78,3 +78,78 @@ DORMANCY_HIGH_AMOUNT       = 5000.0 # reactivation + large amount
 class SequenceRiskEngine:
     """
     Evaluates behavioural sequence risk for a pending transaction using
+    XGBoost + SHAP TreeExplainer.
+
+    All features are computed strictly before as_of_timestamp (causal filter)
+    so the engine can never leak future information into the scoring decision.
+
+    The final sequence_score is a blend of:
+      - XGBoost predicted probability P(mule)
+      - Hard-rule boosts from extreme threshold violations
+    Boosted scores are clamped at 0.98 to preserve model calibration signal.
+    """
+
+    def __init__(self):
+        self.model: xgb.XGBClassifier | None = None
+        self._load_model()
+
+    def _load_model(self) -> None:
+        """
+        Searches known artifact paths for serialized XGBoost weights.
+        Supports .json format (XGBoost native binary format).
+        Initialises SHAP explainer immediately after successful load.
+        """
+        model_paths = [
+            os.path.abspath("backend/artifacts/xgboost_sequence_model.json"),
+            os.path.abspath("MuleNet/backend/artifacts/xgboost_sequence_model.json"),
+            os.path.abspath("artifacts/xgboost_sequence_model.json"),
+        ]
+        for p in model_paths:
+            if os.path.exists(p):
+                try:
+                    self.model = xgb.XGBClassifier(n_jobs=1)
+                    self.model.load_model(p)
+                    shap_engine.init_explainer(self.model)
+                    logger.info(f"[SequenceRiskEngine] XGBoost + SHAP loaded from {p}")
+                    return
+                except Exception as e:
+                    logger.warning(f"[SequenceRiskEngine] Failed to load model from {p}: {e}")
+
+        logger.warning(
+            "[SequenceRiskEngine] No XGBoost weights found — "
+            "scoring will fall back to hard-rule heuristics only."
+        )
+
+    # ------------------------------------------------------------------
+    # Feature extraction
+    # ------------------------------------------------------------------
+
+    def extract_features(
+        self,
+        account_id: str,
+        amount: float,
+        as_of_timestamp: str,
+        events: List[Dict[str, Any]],
+        historical_txns: List[Dict[str, Any]]
+    ) -> Dict[str, float]:
+        """
+        Extracts the full 17-feature behavioural vector for the pending
+        transaction. All inputs are filtered through CausalFilter to ensure
+        strict temporal integrity.
+
+        Args:
+            account_id       : Account being scored
+            amount           : Transaction amount (currency units)
+            as_of_timestamp  : ISO-8601 scoring cutoff
+            events           : Full raw event log for account
+            historical_txns  : All prior transactions for account
+
+        Returns:
+            Dict mapping feature name -> float value
+        """
+        prior_events = CausalFilter.filter_prior_events(events, as_of_timestamp)
+        prior_txns   = CausalFilter.filter_prior_transactions(historical_txns, as_of_timestamp)
+        as_of_dt     = CausalFilter.parse_iso(as_of_timestamp)
+
+        # ----------------------------------------------------------------
+        # 1. Setup-to-action gap (minutes)
