@@ -1,30 +1,21 @@
-from typing import Dict, Any, List
-from sklearn.ensemble import IsolationForest
+import os
+import logging
 import numpy as np
+from typing import Dict, Any, List
+import joblib
+from sklearn.ensemble import IsolationForest
+
+logger = logging.getLogger(__name__)
+
+class AnomalyModelLoadError(Exception):
+    """Raised when the joblib model fails to load from disk."""
+    pass
 
 class AnomalyEngine:
     """
-    Unsupervised Isolation Forest novelty detector.
+    Unsupervised Isolation Forest novelty detector (Person 3).
+    Evaluates transactions for multi-dimensional anomalies that evade rules.
     """
     def __init__(self):
-        # ---------------------------------------------------------
-        # PERSON 3 PLACEHOLDER: Isolation Forest
-        # Load isolation_forest.joblib here
-        # TO BE CHANGED ACCORDINGLY AS PER THE REQUIREMENT
-        # ---------------------------------------------------------
-        pass
-
-    def score_anomaly(self, amount: float, velocity: float, setup_gap: float) -> float:
-        """
-        Scores transaction based on Isolation Forest anomaly bounds.
-        """
-        # ---------------------------------------------------------
-        # PERSON 3 PLACEHOLDER: Isolation Forest Inference
-        # Predict using Isolation Forest
-        # TO BE CHANGED ACCORDINGLY AS PER THE REQUIREMENT
-        # ---------------------------------------------------------
-        
-        # Dummy normalized score for Person 4 testing
-        return 0.05
-
-anomaly_engine = AnomalyEngine()
+        self.model = None
+        self._load_model()
