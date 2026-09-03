@@ -73,3 +73,79 @@ def split_elliptic(input_path: str, train_out: str, test_out: str, split_ratio: 
 
             if (i + 1) % 50000 == 0:
                 print(f"   Processed {i + 1:,} Elliptic rows (Train: {train_count:,}, Test: {test_count:,}) ...")
+
+    total = train_count + test_count
+    print(f"Elliptic split completed: Total={total:,} | Train={train_count:,} ({train_count/total*100:.1f}%) | Test={test_count:,} ({test_count/total*100:.1f}%)")
+    print(f"   Saved -> {train_out}")
+    print(f"   Saved -> {test_out}")
+
+
+def split_ibm(input_path: str, train_out: str, test_out: str, split_ratio: float = 0.8, seed: int = 42):
+    """
+    Performs streaming train/test split on IBM HI-Small transactions CSV.
+    Preserves ground truth laundering distributions across both subsets.
+    """
+    print(f"\n[2/2] Splitting IBM AML Dataset: {input_path}")
+    if not os.path.exists(input_path):
+        print(f"Error: {input_path} not found.")
+        return
+
+    random.seed(seed)
+    train_count = 0
+    test_count = 0
+    train_launder = 0
+    test_launder = 0
+
+    with open(input_path, mode="r", encoding="utf-8") as fin, \
+         open(train_out, mode="w", newline="", encoding="utf-8") as f_train, \
+         open(test_out, mode="w", newline="", encoding="utf-8") as f_test:
+        
+        reader = csv.reader(fin)
+        writer_train = csv.writer(f_train)
+        writer_test = csv.writer(f_test)
+
+        header = next(reader, None)
+        if header:
+            writer_train.writerow(header)
+            writer_test.writerow(header)
+
+        for i, row in enumerate(reader):
+            if len(row) < 11:
+                continue
+
+            is_launder = (row[10].strip() == "1")
+
+            if random.random() < split_ratio:
+                writer_train.writerow(row)
+                train_count += 1
+                if is_launder:
+                    train_launder += 1
+            else:
+                writer_test.writerow(row)
+                test_count += 1
+                if is_launder:
+                    test_launder += 1
+
+            if (i + 1) % 1000000 == 0:
+                print(f"   Processed {i + 1:,} IBM rows (Train: {train_count:,}, Test: {test_count:,}) ...")
+
+    total = train_count + test_count
+    print(f"IBM split completed: Total={total:,} | Train={train_count:,} (Laundering: {train_launder:,}) | Test={test_count:,} (Laundering: {test_launder:,})")
+    print(f"   Saved -> {train_out}")
+    print(f"   Saved -> {test_out}")
+
+
+def main():
+    os.makedirs(PROCESSED_DIR, exist_ok=True)
+    print("=========================================================")
+    print(" MuleNet Dataset Train-Test Partitioning Suite")
+    print("=========================================================")
+    
+    split_elliptic(ELLIPTIC_RAW, ELLIPTIC_TRAIN_OUT, ELLIPTIC_TEST_OUT, split_ratio=0.8)
+    split_ibm(IBM_RAW, IBM_TRAIN_OUT, IBM_TEST_OUT, split_ratio=0.8)
+    
+    print("\nAll train-test partitions successfully generated in data/processed/.")
+
+
+if __name__ == "__main__":
+    main()
