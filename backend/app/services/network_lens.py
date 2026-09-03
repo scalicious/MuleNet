@@ -198,3 +198,103 @@ class NetworkRiskEngine:
             account_id, as_of_timestamp, hops=2
         )
         nodes = ego_data.get("nodes", [])
+        links = ego_data.get("links", [])
+        reasons: List[Dict[str, Any]] = []
+
+        # Degenerate: completely isolated account with no history
+        if len(nodes) <= 1 and not links:
+            return 0.08, [{
+                "signal": "isolated_node",
+                "weight": 0.05,
+                "explanation": (
+                    "No prior counterparties or transactions found in the "
+                    "causal subgraph window — insufficient network evidence."
+                )
+            }]
+
+        # Convert ego dict to PyG Data object
+        try:
+            pyg_data, focus_idx, node_ids = subgraph_extractor.extract(
+                ego_data, account_id, counterparty_id
+            )
+        except Exception as e:
+            logger.error(f"[NetworkRiskEngine] SubgraphExtractor failed: {e}")
+            return 0.15, [{
+                "signal": "extractor_error",
+                "weight": 0.10,
+                "explanation": f"Graph feature extraction error: {str(e)}"
+            }]
+
+        x          = pyg_data.x.to(self.device)
+        edge_index = pyg_data.edge_index.to(self.device)
+
+        # ---- GAT inference ----
+        gat_prob = 0.10
+        try:
+            with torch.no_grad():
+                logits, (att_edge_index, alpha) = self.model(
+                    x, edge_index, return_attention_weights=True
+                )
+                probs = F.softmax(logits, dim=-1)
+                if focus_idx < probs.size(0):
+                    gat_prob = float(probs[focus_idx, 1].item())
+
+                attention_evidence = self._extract_attention_evidence(
+                    alpha, att_edge_index, node_ids, focus_idx
+                )
+                reasons.extend(attention_evidence)
+
+        except Exception as e:
+            logger.error(f"[NetworkRiskEngine] GAT forward error: {e}")
+
+        score = gat_prob
+
+        # ---- Structural heuristic: subgraph density ----
+        num_neighbors = len(nodes)
+        num_links     = len(links)
+        density = num_links / max(1.0, num_neighbors * (num_neighbors - 1))
+
+        if num_neighbors >= 3:
+            density_boost = min(0.35, density * 0.7 + num_neighbors * 0.03)
+            score = max(score, density_boost + gat_prob * 0.5)
+            reasons.append({
+                "signal": "high_neighborhood_density",
+                "weight": round(density_boost, 3),
+                "explanation": (
+                    f"Ego-subgraph contains {num_neighbors} counterparties "
+                    f"with density {density:.2f} — consistent with hub-and-spoke "
+                    "mule topology where funds are aggregated before layering."
+                )
+            })
+
+        # ---- Structural heuristic: known risky edge adjacency ----
+        risky_links = [lnk for lnk in links if lnk.get("is_risky", False)]
+        if risky_links:
+            risky_boost = min(0.45, 0.20 + len(risky_links) * 0.08)
+            score = max(score, 0.72 + len(risky_links) * 0.03)
+            reasons.append({
+                "signal": "known_mule_cluster_adjacency",
+                "weight": round(risky_boost, 3),
+                "explanation": (
+                    f"{len(risky_links)} high-risk transaction edge(s) detected "
+                    "adjacent to this account in an active laundering topology. "
+                    "Direct adjacency to flagged nodes is a Tier-1 network indicator."
+                )
+            })
+
+        # ---- Ring detector: cycle / syndicate / hub / layering ----
+        try:
+            ring_analysis = ring_detector.analyse(
+                account_id=account_id,
+                graph=graph_manager.graph,
+                as_of_timestamp=as_of_timestamp,
+                hops=3
+            )
+
+            if ring_analysis["in_ring"]:
+                score = max(score, 0.82)
+                reasons.append({
+                    "signal": "circular_routing_detected",
+                    "weight": 0.50,
+                    "explanation": (
+                        ring_analysis["signals"][0]
