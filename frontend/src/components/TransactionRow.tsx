@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, ChevronRight, ShieldAlert } from 'lucide-react';
+import { ArrowRight, ChevronRight } from 'lucide-react';
 import { Transaction, EnforcementStatus } from '../types/risk';
 import RiskBadge from './RiskBadge';
 
@@ -36,14 +36,18 @@ export default function TransactionRow({
   isNew = false,
 }: TransactionRowProps) {
   const isCritical = transaction.riskTier === 'CRITICAL';
-  
+
   const formattedTime = transaction.timestamp.includes('T')
     ? transaction.timestamp.split('T')[1]?.split('.')[0] || transaction.timestamp
     : transaction.timestamp;
 
-  const formattedAmount = typeof transaction.amount === 'number'
-    ? `$${transaction.amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
-    : transaction.amount;
+  const formattedAmount =
+    typeof transaction.amount === 'number'
+      ? `$${transaction.amount.toLocaleString('en-US', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })}`
+      : transaction.amount;
 
   const statusObj = STATUS_CONFIG[transaction.status] || STATUS_CONFIG.ALLOWED;
 
@@ -54,12 +58,12 @@ export default function TransactionRow({
     }
   };
 
-  // Border & background classes based on status and selection
+  // Border & background styling
   const baseBorderClass = isSelected
     ? 'border-l-4 border-l-cyan-400 bg-cyan-950/30 ring-1 ring-cyan-500/30'
     : isCritical
-      ? 'border-l-4 border-l-rose-500/80 bg-rose-950/10 hover:bg-rose-950/20'
-      : 'border-l-4 border-l-transparent hover:bg-[#121929]/70';
+    ? 'border-l-4 border-l-rose-500/80 bg-rose-950/10 hover:bg-rose-950/20'
+    : 'border-l-4 border-l-transparent hover:bg-[#121929]/70';
 
   const arrivalAnimationClass = isNew
     ? isCritical
@@ -74,66 +78,51 @@ export default function TransactionRow({
       onClick={() => onSelect(transaction)}
       onKeyDown={handleKeyDown}
       aria-pressed={isSelected}
-      aria-label={`Transaction ${transaction.id}, Amount ${formattedAmount}, Risk ${transaction.riskTier} score ${transaction.riskScore}`}
-      className={`px-4 sm:px-6 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 transition-all duration-150 cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0f17] ${baseBorderClass} ${arrivalAnimationClass}`}
+      aria-label={`Transaction ${transaction.id}, Amount ${formattedAmount}, Risk ${transaction.riskTier}`}
+      className={`px-3.5 sm:px-4 py-2.5 transition-all duration-150 cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${baseBorderClass} ${arrivalAnimationClass}`}
     >
-      {/* Primary: TIME, ID, and SENDER -> RECEIVER */}
-      <div className="flex items-center space-x-3 sm:space-x-5 min-w-0">
-        {/* Timestamp */}
-        <span className="text-xs font-mono text-slate-400 w-16 sm:w-20 shrink-0 tracking-tight">
-          {formattedTime}
-        </span>
+      {/* Top Line: Time + Transaction ID on left, Amount + Risk Badge on right */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center space-x-2 text-[11px] font-mono text-slate-400">
+          <span className="text-slate-300 font-semibold">{formattedTime}</span>
+          <span className="text-slate-600">•</span>
+          <span className="text-slate-500">{transaction.id}</span>
+        </div>
 
-        {/* Transaction ID */}
-        <span className="text-xs font-mono font-medium text-slate-400 w-24 shrink-0 hidden sm:inline-block">
-          {transaction.id}
-        </span>
-
-        {/* Flow Routing: SENDER -> RECEIVER */}
-        <div className="flex items-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm font-mono">
-          <span className="text-cyan-300 font-semibold bg-cyan-950/40 px-2 py-0.5 rounded border border-cyan-800/40">
-            {transaction.sender}
+        <div className="flex items-center space-x-2">
+          <span className="text-xs sm:text-sm font-mono font-bold text-slate-100 tracking-tight">
+            {formattedAmount}
           </span>
-          <ArrowRight className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-          <span className="text-slate-200 font-semibold bg-slate-800/50 px-2 py-0.5 rounded border border-slate-700/50">
-            {transaction.receiver}
-          </span>
+          <RiskBadge
+            tier={transaction.riskTier}
+            score={transaction.riskScore}
+            showIcon={isCritical}
+            size="sm"
+          />
         </div>
       </div>
 
-      {/* Primary: AMOUNT, RISK TIER, and STATUS */}
-      <div className="flex items-center justify-between md:justify-end space-x-3 sm:space-x-4 shrink-0 pl-16 md:pl-0">
-        {/* Amount */}
-        <span className="text-xs sm:text-sm font-mono font-bold text-slate-100 min-w-[80px] text-right tracking-tight">
-          {formattedAmount}
-        </span>
-
-        {/* Risk Score */}
-        <div className="hidden lg:flex items-center gap-1 font-mono text-xs text-slate-400">
-          <span className="text-[10px] uppercase text-slate-500">Score:</span>
-          <span className="font-bold text-slate-200">{transaction.riskScore}</span>
+      {/* Bottom Line: Flow Routing (Sender -> Receiver) on left, Status Badge on right */}
+      <div className="flex items-center justify-between gap-2 mt-1.5">
+        <div className="flex items-center space-x-1.5 text-xs font-mono min-w-0">
+          <span className="text-cyan-300 font-medium bg-cyan-950/50 px-1.5 py-0.5 rounded border border-cyan-800/40 text-[11px] truncate max-w-[110px]">
+            {transaction.sender}
+          </span>
+          <ArrowRight className="w-3 h-3 text-slate-500 shrink-0" />
+          <span className="text-slate-200 font-medium bg-slate-800/60 px-1.5 py-0.5 rounded border border-slate-700/50 text-[11px] truncate max-w-[110px]">
+            {transaction.receiver}
+          </span>
         </div>
 
-        {/* Risk Tier Badge */}
-        <RiskBadge
-          tier={transaction.riskTier}
-          score={transaction.riskScore}
-          showIcon={isCritical}
-          size="sm"
-        />
-
-        {/* Enforcement Decision */}
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-semibold tracking-wider uppercase border ${statusObj.style} min-w-[78px] text-center justify-center`}
-        >
-          {statusObj.label}
-        </span>
-
-        {/* Selection Indicator Chevron */}
-        <div className="hidden sm:flex items-center justify-center w-5 text-slate-600">
+        <div className="flex items-center space-x-1.5 shrink-0">
+          <span
+            className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold tracking-wider uppercase border ${statusObj.style}`}
+          >
+            {statusObj.label}
+          </span>
           <ChevronRight
-            className={`w-4 h-4 transition-transform duration-150 ${
-              isSelected ? 'text-cyan-400 translate-x-0.5' : 'opacity-0'
+            className={`w-3.5 h-3.5 transition-transform duration-150 ${
+              isSelected ? 'text-cyan-400 translate-x-0.5' : 'text-slate-600'
             }`}
           />
         </div>
