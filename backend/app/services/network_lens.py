@@ -118,3 +118,83 @@ class NetworkRiskEngine:
       - GAT softmax probability (class=1 = mule/risky node)
       - Subgraph density heuristics
       - Known-risky edge adjacency
+      - RingDetector cycle, syndicate, hub, and layering signals
+      - Pre-recorded mean edge attention from graph metadata
+
+    All structural scores are bounded to [0, 1] and merged via max-fusion
+    with the GAT base probability to ensure the ML signal is never
+    overridden but can always be boosted by structural evidence.
+    """
+
+    TOP_K_ATTENTION_EDGES = 3
+
+    def __init__(self):
+        self.device = torch.device("cpu")
+        self.model = MuleGATModel(
+            in_channels=16,
+            hidden_channels=32,
+            out_channels=2,
+            heads=4,
+            dropout=0.15
+        ).to(self.device)
+        self._load_model()
+        self.model.eval()
+
+    def _load_model(self) -> None:
+        """
+        Attempts to load serialized GAT weights from known artifact paths.
+        Supports both raw state_dict and wrapped checkpoint dicts.
+        Falls back to random initialisation (dev mode) if no weights found.
+        """
+        model_paths = [
+            os.path.abspath("backend/artifacts/mule_gat_model.pt"),
+            os.path.abspath("MuleNet/backend/artifacts/mule_gat_model.pt"),
+            os.path.abspath("artifacts/mule_gat_model.pt"),
+        ]
+        loaded = False
+        for p in model_paths:
+            if os.path.exists(p):
+                try:
+                    state = torch.load(p, map_location=self.device, weights_only=True)
+                    if "model_state_dict" in state:
+                        state = state["model_state_dict"]
+                    self.model.load_state_dict(state, strict=False)
+                    logger.info(f"[NetworkRiskEngine] GAT weights loaded from {p}")
+                    loaded = True
+                    break
+                except Exception as e:
+                    logger.warning(f"[NetworkRiskEngine] Could not load weights from {p}: {e}")
+
+        if not loaded:
+            logger.warning(
+                "[NetworkRiskEngine] No pretrained GAT weights found — "
+                "using random initialisation (dev mode). Structural heuristics still active."
+            )
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def score_network(
+        self,
+        account_id: str,
+        counterparty_id: str,
+        as_of_timestamp: str,
+        graph_manager: Any
+    ) -> Tuple[float, List[Dict[str, Any]]]:
+        """
+        Scores the network risk for a pending transaction.
+
+        Args:
+            account_id        : Sender account identifier
+            counterparty_id   : Intended recipient account identifier
+            as_of_timestamp   : ISO-8601 timestamp — causal cutoff for graph
+            graph_manager     : MemoryGraphManager instance
+
+        Returns:
+            (network_risk_score ∈ [0,1], list of forensic evidence dicts)
+        """
+        ego_data = graph_manager.get_ego_subgraph(
+            account_id, as_of_timestamp, hops=2
+        )
+        nodes = ego_data.get("nodes", [])
