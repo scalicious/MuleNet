@@ -59,6 +59,7 @@ class DemoRunner:
                 }
             ]
         }
+        print(f'[MuleNet] Queuing injection scenario: {scenario_type}')
         await self.injected_queue.put(scenario_event)
 
     async def stream_transactions(self) -> AsyncGenerator[str, None]:
