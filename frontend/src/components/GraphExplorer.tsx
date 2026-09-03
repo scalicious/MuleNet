@@ -327,11 +327,6 @@ export default function GraphExplorer({
             <span className="font-bold text-rose-400">4</span>
           </div>
         </div>
-
-        <div className="hidden md:flex items-center gap-1 text-[11px] text-slate-500">
-          <Activity className="w-3 h-3 text-cyan-400" />
-          <span>GAT Attention Edge Weights Active</span>
-        </div>
       </div>
 
       {/* Main Canvas & Overlay Area */}
