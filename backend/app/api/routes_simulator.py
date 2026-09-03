@@ -6,7 +6,7 @@ from app.services.demo_runner import demo_runner
 router = APIRouter(tags=["Attack Simulator"])
 
 class SimulationRequest(BaseModel):
-    scenario_type: str = "ATO" # "ATO" | "SMURFING" | "RING_WASH"
+    scenario_type: str = "ATO" # Type of attack to inject # "ATO" | "SMURFING" | "RING_WASH"
     account_id: Optional[str] = None
     amount: Optional[float] = 49500.0
 
