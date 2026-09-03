@@ -68,3 +68,26 @@ class AnomalyEngine:
         gap = min(gap, 100000.0)
 
         return np.array([[amt, vel, gap]])
+
+    def score_anomaly(self, amount: float, velocity: float, setup_gap: float) -> float:
+        """
+        Scores transaction based on Isolation Forest anomaly bounds.
+        Returns a normalized score in [0, 1] where 1 is highly anomalous.
+        """
+        try:
+            feat = self._prepare_features(amount, velocity, setup_gap)
+            raw_score = self.model.score_samples(feat)[0]
+            
+            # IF score_samples returns negative values where lower = more anomalous.
+            # Convert to a positive 0-1 risk score.
+            # Baseline inliers are usually ~ -0.4 to -0.6
+            # Outliers can go below -0.7
+            norm_score = max(0.0, min(1.0, float(-raw_score * 1.5)))
+            
+            logger.debug(f"[AnomalyEngine] raw: {raw_score:.3f} -> norm: {norm_score:.3f}")
+            return round(norm_score, 4)
+        except Exception as e:
+            logger.error(f"[AnomalyEngine] Inference error: {e}")
+            return 0.05
+
+anomaly_engine = AnomalyEngine()
