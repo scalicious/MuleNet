@@ -73,3 +73,83 @@ def load_accounts_metadata(path: str):
                 entity_map[node_id] = entity_name
     print(f"      Mapped {len(entity_map):,} account entities.")
     return entity_map
+
+
+def extract_node_and_edge_features(trans_path: str, entity_map: dict):
+    """
+    Streaming single-pass accumulator over HI-Small_Trans.csv.
+    Extracts high-dimensional graph, velocity, format entropy, and ratio signals
+    while keeping RAM minimal.
+    """
+    print(f"[2/5] Streaming transactions from {trans_path} ...")
+    
+    # Per-node aggregators
+    # node_id -> stats
+    out_amounts = collections.defaultdict(list)
+    in_amounts  = collections.defaultdict(list)
+    out_receivers = collections.defaultdict(set)
+    in_senders    = collections.defaultdict(set)
+    out_formats   = collections.defaultdict(lambda: collections.Counter())
+    out_currencies = collections.defaultdict(lambda: collections.Counter())
+    out_timestamps = collections.defaultdict(list)
+    
+    # Label trackers: node is positive if it ever sent or received laundering money
+    laundering_nodes = set()
+    laundering_edges = []
+    
+    # Process rows
+    total_edges = 0
+    with open(trans_path, mode="r", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        header = next(reader, None)
+        
+        # Row layout:
+        # 0: Timestamp, 1: From Bank, 2: Account, 3: To Bank, 4: Account,
+        # 5: Amount Received, 6: Receiving Currency, 7: Amount Paid,
+        # 8: Payment Currency, 9: Payment Format, 10: Is Laundering
+        for row in reader:
+            if len(row) < 11:
+                continue
+            
+            total_edges += 1
+            ts_str, fb, fa, tb, ta = row[0], row[1].strip(), row[2].strip(), row[3].strip(), row[4].strip()
+            amt_recv = float(row[5])
+            rc = row[6].strip()
+            amt_paid = float(row[7])
+            pc = row[8].strip()
+            fmt = row[9].strip()
+            is_laundering = int(row[10])
+            
+            sender_id = f"{fb}_{fa}"
+            receiver_id = f"{tb}_{ta}"
+            
+            # Record node connections
+            out_amounts[sender_id].append(amt_paid)
+            in_amounts[receiver_id].append(amt_recv)
+            out_receivers[sender_id].add(receiver_id)
+            in_senders[receiver_id].add(sender_id)
+            out_formats[sender_id][fmt] += 1
+            out_currencies[sender_id][pc] += 1
+            
+            # Parse timestamp to unix minute
+            try:
+                dt = datetime.strptime(ts_str, "%Y/%m/%d %H:%M")
+                epoch_min = int(dt.timestamp()) // 60
+                out_timestamps[sender_id].append(epoch_min)
+            except Exception:
+                pass
+            
+            if is_laundering == 1:
+                laundering_nodes.add(sender_id)
+                laundering_nodes.add(receiver_id)
+                laundering_edges.append((sender_id, receiver_id, amt_recv, fmt, is_laundering))
+
+            if total_edges % 1000000 == 0:
+                print(f"      Processed {total_edges:,} transactions ...")
+
+    print(f"      Finished reading {total_edges:,} transactions.")
+    return (
+        out_amounts, in_amounts, out_receivers, in_senders,
+        out_formats, out_currencies, out_timestamps, laundering_nodes
+    )
+
