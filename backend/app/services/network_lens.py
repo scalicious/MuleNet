@@ -298,3 +298,78 @@ class NetworkRiskEngine:
                     "weight": 0.50,
                     "explanation": (
                         ring_analysis["signals"][0]
+                        if ring_analysis["signals"]
+                        else (
+                            f"Account participates in a {ring_analysis['cycle_length']}-node "
+                            "circular routing ring — funds cycle back to origin to obscure trail."
+                        )
+                    )
+                })
+
+            if ring_analysis["device_syndicate"]:
+                score = max(score, 0.70)
+                peers = ring_analysis["syndicate_accounts"]
+                reasons.append({
+                    "signal": "device_sharing_syndicate",
+                    "weight": 0.40,
+                    "explanation": (
+                        f"Account shares device fingerprint with {len(peers)} other account(s): "
+                        f"{', '.join(peers[:3])}{'...' if len(peers) > 3 else ''}. "
+                        "Device sharing across accounts is a strong coordinated fraud indicator."
+                    )
+                })
+
+            if ring_analysis["is_hub"]:
+                score = max(score, 0.60)
+                reasons.append({
+                    "signal": "collection_hub_pattern",
+                    "weight": 0.35,
+                    "explanation": (
+                        "Account exhibits fan-in collection hub structure — "
+                        "multiple senders routing funds through this account "
+                        "is consistent with smurfing aggregation before layering."
+                    )
+                })
+
+            if ring_analysis["layering_depth"] >= 3:
+                reasons.append({
+                    "signal": "deep_layering_path",
+                    "weight": 0.20,
+                    "explanation": (
+                        f"Funds traceable through a {ring_analysis['layering_depth']}-hop "
+                        "layering chain from this account — indicative of structured "
+                        "multi-entity obfuscation."
+                    )
+                })
+
+        except Exception as e:
+            logger.error(f"[NetworkRiskEngine] RingDetector error: {e}")
+
+        # ---- Pre-recorded mean GAT attention on incident edges ----
+        incident_attn = [
+            float(lnk.get("gat_attention", 0.5))
+            for lnk in links
+            if lnk.get("source") == account_id or lnk.get("target") == account_id
+        ]
+        if incident_attn:
+            mean_attn = float(np.mean(incident_attn))
+            if mean_attn >= 0.80:
+                score = max(score, 0.65)
+                reasons.append({
+                    "signal": "high_mean_edge_attention",
+                    "weight": round(mean_attn, 3),
+                    "explanation": (
+                        f"Mean pre-recorded GAT attention on account edges is {mean_attn:.2f} "
+                        "(>0.80 threshold). Account sits on a previously identified "
+                        "high-attention path in the transaction graph."
+                    )
+                })
+
+        return min(1.0, round(float(score), 4)), reasons
+
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    def _extract_attention_evidence(
+        self,
