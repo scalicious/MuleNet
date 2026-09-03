@@ -68,3 +68,78 @@ def resolve_dataset_sample(csv_path: str, max_samples: int = 100000):
 
 
 def train_xgboost_sequence_lens(df: pd.DataFrame):
+    """
+    Trains calibrated XGBoost sequence model with strict regularization against overfitting.
+    """
+    print("\n=== [Person 3] Training XGBoost Sequence Risk Engine ===")
+    
+    feature_cols = [
+        "in_degree_ratio",
+        "out_degree_ratio",
+        "log_total_degree",
+        "flow_imbalance",
+        "fan_in_out_ratio",
+        "ach_payment_ratio",
+        "format_entropy",
+        "high_risk_currency_ratio",
+        "structuring_ratio",
+        "burst_score",
+        "extreme_feature_count_2",
+        "extreme_feature_count_3",
+        "cv_out_amount"
+    ]
+    
+    X = df[feature_cols].copy().fillna(0.0)
+    y = df["is_laundering"].astype(int)
+    
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.20, random_state=42, stratify=y
+    )
+    
+    pos_count = (y_train == 1).sum()
+    neg_count = (y_train == 0).sum()
+    scale_weight = float(neg_count / max(1, pos_count))
+    print(f"  Class balance: {neg_count:,} neg / {pos_count:,} pos -> scale_pos_weight={scale_weight:.2f}")
+
+    # Constrained hyperparameters to avoid memorizing specific node identities
+    model = xgb.XGBClassifier(
+        n_estimators=250,
+        max_depth=5,
+        learning_rate=0.04,
+        subsample=0.80,
+        colsample_bytree=0.80,
+        min_child_weight=3,
+        gamma=1.0,
+        scale_pos_weight=min(scale_weight, 25.0), # Capped to keep probability calibration smooth
+        eval_metric=["auc", "logloss"],
+        random_state=42,
+        n_jobs=-1
+    )
+    
+    model.fit(
+        X_train, y_train,
+        eval_set=[(X_train, y_train), (X_test, y_test)],
+        verbose=False
+    )
+    
+    preds_proba = model.predict_proba(X_test)[:, 1]
+    preds_binary = (preds_proba >= 0.50).astype(int)
+    
+    roc = roc_auc_score(y_test, preds_proba)
+    pr_auc = average_precision_score(y_test, preds_proba)
+    print(f"  Test Evaluation: ROC-AUC = {roc:.4f} | PR-AUC = {pr_auc:.4f}")
+    print("  Classification Report:")
+    print(classification_report(y_test, preds_binary, digits=4))
+    
+    # Save model artifact
+    os.makedirs(ARTIFACTS_DIR, exist_ok=True)
+    out_json = os.path.join(ARTIFACTS_DIR, "xgboost_sequence_model.json")
+    model.save_model(out_json)
+    print(f"  Exported XGBoost model -> {out_json}")
+    
+    # Explainability sanity check with SHAP
+    print("  Validating TreeExplainer compatibility ...")
+    explainer = shap.TreeExplainer(model)
+    shap_vals = explainer.shap_values(X_test.iloc[:200])
+    print("  SHAP TreeExplainer initialized and validated successfully.")
+    
