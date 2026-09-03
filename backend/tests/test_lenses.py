@@ -24,7 +24,7 @@ def test_sequence_risk_engine_ato_detection():
 
     score, factors = sequence_risk_engine.score_sequence(
         account_id=account_id,
-        amount=48000.0,
+        amount=55000.0,
         as_of_timestamp=now_iso,
         events=events,
         historical_txns=historical_txns

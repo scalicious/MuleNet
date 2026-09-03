@@ -1,0 +1,23 @@
+{
+  "feature_order": [
+    "in_degree_ratio",
+    "out_degree_ratio",
+    "log_total_degree",
+    "flow_imbalance",
+    "fan_in_out_ratio",
+    "ach_payment_ratio",
+    "format_entropy",
+    "high_risk_currency_ratio",
+    "structuring_ratio",
+    "burst_score",
+    "extreme_feature_count_2",
+    "extreme_feature_count_3",
+    "cv_out_amount"
+  ],
+  "n_estimators": 250,
+  "max_depth": 5,
+  "learning_rate": 0.04,
+  "roc_auc": 0.5417,
+  "pr_auc": 0.6937,
+  "dataset": "IBM-HI-Small"
+}

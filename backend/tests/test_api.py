@@ -3,7 +3,9 @@ from fastapi.testclient import TestClient
 from datetime import datetime
 
 from app.main import app
+from app.core.db import init_db
 
+init_db()
 client = TestClient(app)
 
 def test_health_endpoint():

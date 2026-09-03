@@ -31,6 +31,14 @@ class ContextRiskEngine:
                 "explanation": f"Transaction involves uncommon currency: {currency}."
             })
 
+        if "OFFSHORE" in counterparty_id:
+            score += 0.30
+            factors.append({
+                "feature": "offshore_counterparty",
+                "impact": 0.30,
+                "explanation": f"Counterparty {counterparty_id} is located in an offshore jurisdiction."
+            })
+
         return min(1.0, round(score, 4)), factors
 
 context_risk_engine = ContextRiskEngine()

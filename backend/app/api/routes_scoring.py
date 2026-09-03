@@ -40,14 +40,14 @@ async def score_action(payload: ScoreRequest, db: Session = Depends(get_session)
         EventEntity.account_id == payload.account_id,
         EventEntity.timestamp < payload.timestamp
     )
-    historical_events = db.exec(events_query).all()
+    historical_events = [e.model_dump() for e in db.exec(events_query).all()]
     
     # Strictly prior transactions
     txns_query = select(TransactionEntity).where(
         TransactionEntity.sender_id == payload.account_id,
         TransactionEntity.timestamp < payload.timestamp
     )
-    historical_txns = db.exec(txns_query).all()
+    historical_txns = [t.model_dump() for t in db.exec(txns_query).all()]
 
     # ---------------------------------------------------------
     # PERSON 3 PLACEHOLDER: Sequence Risk Engine

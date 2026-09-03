@@ -330,16 +330,19 @@ class SequenceRiskEngine:
 
         # ---- Build feature vector in training column order ----
         feature_vector = np.array([[
-            feats["flow_imbalance"],
-            feats["fan_in_out_ratio"],
-            feats["degree_vs_time_mean"],
-            feats["in_degree_ratio"],
-            feats["out_degree_ratio"],
-            feats["log_total_degree"],
-            feats["extreme_feature_count_2"],
-            feats["extreme_feature_count_3"],
-            feats["feature_mean"],
-            feats["feature_std"],
+            feats.get("in_degree_ratio", 0.0),
+            feats.get("out_degree_ratio", 0.0),
+            feats.get("log_total_degree", 0.0),
+            feats.get("flow_imbalance", 0.0),
+            feats.get("fan_in_out_ratio", 0.0),
+            feats.get("ach_payment_ratio", 0.0),
+            feats.get("format_entropy", 0.0),
+            feats.get("high_risk_currency_ratio", 0.0),
+            feats.get("structuring_ratio", 0.0),
+            feats.get("burst_score", 0.0),
+            feats.get("extreme_feature_count_2", feats.get("extreme_feature_count_2", 0.0)),
+            feats.get("extreme_feature_count_3", feats.get("extreme_feature_count_3", 0.0)),
+            feats.get("cv_out_amount", 0.0)
         ]])
 
         # ---- XGBoost inference ----
@@ -392,8 +395,13 @@ class SequenceRiskEngine:
             score = max(score, min(0.98, score + 0.25))
 
         # Rule 2: Statistically extreme transfer amount
-        if feats["amount_zscore"] > AMOUNT_ZSCORE_HIGH:
+        if feats.get("amount_zscore", 0.0) > AMOUNT_ZSCORE_HIGH:
             score = max(score, min(0.98, score + 0.30))
+            factors.append({
+                "feature": "amount_zscore",
+                "impact": 0.30,
+                "explanation": f"Transaction amount is {feats.get('amount_zscore'):.1f} std devs above account mean."
+            })
 
         # Rule 3: Login storm (≥ 4 logins/hour)
         if feats["logins_1h"] >= LOGIN_VELOCITY_HIGH:

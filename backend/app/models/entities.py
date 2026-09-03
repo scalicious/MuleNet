@@ -42,4 +42,4 @@ class DecisionLogEntity(SQLModel, table=True):
     recommended_action: str
     is_synthetic_risk: int = Field(default=0)
     decision_payload: str
-    created_at: str = Field(index=True) = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(index=True, default_factory=lambda: datetime.utcnow().isoformat())
