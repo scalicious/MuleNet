@@ -393,3 +393,60 @@ class SequenceRiskEngine:
 
         # Rule 2: Statistically extreme transfer amount
         if feats["amount_zscore"] > AMOUNT_ZSCORE_HIGH:
+            score = max(score, min(0.98, score + 0.30))
+
+        # Rule 3: Login storm (≥ 4 logins/hour)
+        if feats["logins_1h"] >= LOGIN_VELOCITY_HIGH:
+            score = max(score, min(0.98, score + 0.20))
+
+        # Rule 4: Dormancy reactivation + large amount
+        if feats["dormancy_flag"] > 0 and amount > DORMANCY_HIGH_AMOUNT:
+            score = max(score, min(0.98, score + 0.20))
+            if not any(f["feature"] == "dormancy_reactivation" for f in factors):
+                factors.append({
+                    "feature": "dormancy_reactivation",
+                    "impact":  0.20,
+                    "explanation": (
+                        f"Account reactivated after >30-day dormancy period with a "
+                        f"${amount:,.0f} transfer — dormancy-then-burst pattern "
+                        "is strongly correlated with account takeover activity."
+                    ),
+                })
+
+        # Rule 5: New device login within session before transfer
+        if feats["new_device_flag"] > 0 and feats["setup_gap_minutes"] < 120:
+            score = max(score, min(0.98, score + 0.15))
+            factors.append({
+                "feature": "new_device_login",
+                "impact":  0.15,
+                "explanation": (
+                    "Transaction initiated from an unrecognised device within 1 hour "
+                    "of account modification events — combined device + change signal."
+                ),
+            })
+
+        # Rule 6: Same-session payee-add before transfer
+        if feats["payee_added_flag"] > 0:
+            score = max(score, min(0.98, score + 0.18))
+            factors.append({
+                "feature": "payee_added_in_session",
+                "impact":  0.18,
+                "explanation": (
+                    "Payee added within 30 minutes of this transfer. "
+                    "Same-session payee-add-then-transfer is a top-ranked ATO indicator "
+                    "across UK Finance and FS-ISAC red-team scenarios."
+                ),
+            })
+
+        # ---- Deduplication: keep highest absolute impact per feature key ----
+        seen: Dict[str, Dict[str, Any]] = {}
+        for f in factors:
+            key = f["feature"]
+            if key not in seen or abs(f["impact"]) > abs(seen[key]["impact"]):
+                seen[key] = f
+        deduped = sorted(seen.values(), key=lambda x: abs(x["impact"]), reverse=True)
+
+        return min(1.0, max(0.01, round(score, 4))), deduped[:6]
+
+
+sequence_risk_engine = SequenceRiskEngine()
