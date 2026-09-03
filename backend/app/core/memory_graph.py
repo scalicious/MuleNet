@@ -10,6 +10,7 @@ class MemoryGraphManager:
     """
     def __init__(self):
         self.graph = nx.MultiDiGraph()
+        self._lock = False # Lightweight mutex flag for future async concurrency
         self.account_metadata: Dict[str, Dict[str, Any]] = {}
 
     def add_account(self, account_id: str, metadata: Optional[Dict[str, Any]] = None):
