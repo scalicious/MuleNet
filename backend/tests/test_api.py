@@ -43,3 +43,39 @@ def test_score_action_and_commit_flow():
     commit_res = client.post("/api/v1/commit-action", json=commit_payload)
     assert commit_res.status_code == 200
     commit_data = commit_res.json()
+    assert commit_data["status"] == "COMMITTED"
+
+def test_cases_endpoints():
+    response = client.get("/api/v1/cases")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+    dossier_res = client.get("/api/v1/cases/DEMO-TXN-101")
+    assert dossier_res.status_code == 200
+    dossier = dossier_res.json()
+    assert "transaction_id" in dossier
+    assert "fused_score" in dossier
+
+def test_graph_ego_endpoint():
+    res = client.get("/api/v1/graph/ego/BANK01_HUB900?hops=2")
+    assert res.status_code == 200
+    graph_data = res.json()
+    assert "nodes" in graph_data
+    assert "links" in graph_data
+
+def test_metrics_endpoint():
+    res = client.get("/api/v1/metrics")
+    assert res.status_code == 200
+    metrics = res.json()
+    assert "prevented_loss_value" in metrics
+    assert "total_scored_actions" in metrics
+
+def test_simulator_inject():
+    inject_payload = {
+        "scenario_type": "ATO",
+        "account_id": "BANK01_ACC1042",
+        "amount": 49000.0
+    }
+    res = client.post("/api/v1/simulator/inject", json=inject_payload)
+    assert res.status_code == 200
+    assert res.json()["status"] == "INJECTED"
