@@ -113,7 +113,7 @@ def train_xgboost_sequence_lens(df: pd.DataFrame):
         scale_pos_weight=min(scale_weight, 25.0), # Capped to keep probability calibration smooth
         eval_metric=["auc", "logloss"],
         random_state=42,
-        n_jobs=-1
+        n_jobs=2
     )
     
     model.fit(
@@ -175,7 +175,7 @@ def train_isolation_forest_anomaly_lens(df: pd.DataFrame):
         contamination=0.03,
         max_samples="auto",
         random_state=42,
-        n_jobs=-1
+        n_jobs=2
     )
     iso_forest.fit(X_scaled)
     
