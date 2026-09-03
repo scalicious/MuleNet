@@ -16,9 +16,26 @@ async def lifespan(app: FastAPI):
     # Startup: Initialize DB schema
     print("[MuleNet] Initializing DB schema and loading forensic models...")
     init_db()
+    
+    # ---------------------------------------------------------
+    # PERSON 2 & 3 PLACEHOLDERS: ML Model Lifespan Loading
+    # TO BE CHANGED ACCORDINGLY AS PER THE REQUIREMENT
+    # ---------------------------------------------------------
+    app.state.models = {}
+    print("[MuleNet] Loading ML Models into memory...")
+    
+    # Placeholders for Person 2 (GNN)
+    # app.state.models['gat'] = torch.load('gat.pt')
+    
+    # Placeholders for Person 3 (XGBoost, Isolation Forest)
+    # app.state.models['xgboost'] = xgb.Booster(model_file='xgboost.json')
+    # app.state.models['isolation_forest'] = joblib.load('isolation_forest.joblib')
+    
+    print("[MuleNet] Startup complete.")
     yield
     # Shutdown
     print("[MuleNet] Shutting down AML risk engine...")
+    app.state.models.clear()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

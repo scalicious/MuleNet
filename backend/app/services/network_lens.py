@@ -32,6 +32,11 @@ class MuleGATModel(nn.Module):
 class NetworkRiskEngine:
     def __init__(self):
         self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+        # ---------------------------------------------------------
+        # PERSON 2 PLACEHOLDER: GAT Model
+        # Load gat.pt here in reality, but using dummy init for now.
+        # TO BE CHANGED ACCORDINGLY AS PER THE REQUIREMENT
+        # ---------------------------------------------------------
         self.model = MuleGATModel(in_channels=16, hidden_channels=64, out_channels=2).to(self.device)
         self.model.eval()
 
@@ -45,12 +50,18 @@ class NetworkRiskEngine:
         """
         Computes network risk score and extracts top GAT edge attention weights.
         """
-        # Graph metrics heuristic fallback + GAT simulation
+        # ---------------------------------------------------------
+        # PERSON 2 PLACEHOLDER: Network Forensics & GAT inference
+        # Extract features from subgraph, run GAT, extract attention hook
+        # (return_attention_weights=True)
+        # TO BE CHANGED ACCORDINGLY AS PER THE REQUIREMENT
+        # ---------------------------------------------------------
+        
         ego_data = graph_manager.get_ego_subgraph(account_id, as_of_timestamp, hops=2)
         num_neighbors = len(ego_data["nodes"])
         num_links = len(ego_data["links"])
 
-        # Base network score calculated from graph connectivity
+        # Base network score calculated from graph connectivity (dummy for Person 4)
         density = num_links / max(1, (num_neighbors * (num_neighbors - 1)))
         base_score = min(1.0, (num_neighbors * 0.05) + (density * 0.4))
 

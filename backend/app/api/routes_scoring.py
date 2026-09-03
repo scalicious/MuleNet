@@ -28,16 +28,42 @@ async def score_action(payload: ScoreRequest, db: Session = Depends(get_session)
     """
     txn_id = f"TXN-{uuid.uuid4().hex[:6].upper()}"
 
-    # 1. Sequence Lens
+    # PRE-COMMITMENT RULE: Fetch history < T from SQLite
+    from sqlmodel import select
+    from app.models.entities import EventEntity, TransactionEntity
+    
+    # Strictly prior events
+    events_query = select(EventEntity).where(
+        EventEntity.account_id == payload.account_id,
+        EventEntity.timestamp < payload.timestamp
+    )
+    historical_events = db.exec(events_query).all()
+    
+    # Strictly prior transactions
+    txns_query = select(TransactionEntity).where(
+        TransactionEntity.sender_id == payload.account_id,
+        TransactionEntity.timestamp < payload.timestamp
+    )
+    historical_txns = db.exec(txns_query).all()
+
+    # ---------------------------------------------------------
+    # PERSON 3 PLACEHOLDER: Sequence Risk Engine
+    # Calculates: setup_to_action_gap, time_since_last_profile_change, dormancy_then_activity_flag, login_velocity_1h, amount_zscore
+    # TO BE IMPLEMENTED BY PERSON 3
+    # ---------------------------------------------------------
     seq_score, seq_factors = sequence_risk_engine.score_sequence(
         account_id=payload.account_id,
         amount=payload.amount,
         as_of_timestamp=payload.timestamp,
-        events=[],
-        historical_txns=[]
+        events=historical_events,
+        historical_txns=historical_txns
     )
 
-    # 2. Network Lens
+    # ---------------------------------------------------------
+    # PERSON 2 PLACEHOLDER: Network Risk Engine
+    # GATConv model inference on 1-2 hop neighborhood to get attention scores
+    # TO BE IMPLEMENTED BY PERSON 2
+    # ---------------------------------------------------------
     net_score, net_factors = network_risk_engine.score_network(
         account_id=payload.account_id,
         counterparty_id=payload.counterparty_id,
@@ -53,7 +79,11 @@ async def score_action(payload: ScoreRequest, db: Session = Depends(get_session)
         action_type=payload.action_type
     )
 
-    # 4. Anomaly Engine
+    # ---------------------------------------------------------
+    # PERSON 3 PLACEHOLDER: Anomaly Engine
+    # Isolation Forest inference on transaction anomalies
+    # TO BE IMPLEMENTED BY PERSON 3
+    # ---------------------------------------------------------
     anom_score = anomaly_engine.score_anomaly(
         amount=payload.amount,
         velocity=1.0,
@@ -76,6 +106,11 @@ async def score_action(payload: ScoreRequest, db: Session = Depends(get_session)
         is_ring_member=(net_score > 0.7)
     )
 
+    # ---------------------------------------------------------
+    # PERSON 3 PLACEHOLDER: SHAP Explainer
+    # Setup SHAP TreeExplainer and build the mapping dictionary
+    # TO BE IMPLEMENTED BY PERSON 3
+    # ---------------------------------------------------------
     shap_factors = explainability_engine.format_explanations(
         sequence_factors=seq_factors,
         network_factors=net_factors,
@@ -130,9 +165,10 @@ async def score_action(payload: ScoreRequest, db: Session = Depends(get_session)
     return response
 
 @router.post("/commit-action", response_model=CommitResponse)
-async def commit_action(payload: CommitRequest):
+async def commit_action(payload: CommitRequest, db: Session = Depends(get_session)):
     """
-    Finalizes a scored action, writes the edge to the in-memory graph.
+    Finalizes a scored action, writes the edge to the in-memory graph, 
+    and saves the transaction to the SQLite database.
     """
     txn_id = payload.transaction_id
     if txn_id not in _SCORED_CACHE:
@@ -147,6 +183,7 @@ async def commit_action(payload: CommitRequest):
     cached = _SCORED_CACHE[txn_id]
     req_payload = cached["payload"]
 
+    # 1. Update live in-memory graph
     memory_graph.add_transaction_edge(
         sender_id=req_payload["account_id"],
         receiver_id=req_payload["counterparty_id"],
@@ -154,6 +191,23 @@ async def commit_action(payload: CommitRequest):
         timestamp=req_payload["timestamp"],
         currency=req_payload.get("currency", "USD")
     )
+
+    # 2. Write to SQLite database
+    from app.models.entities import TransactionEntity
+    try:
+        new_txn = TransactionEntity(
+            transaction_id=txn_id,
+            sender_id=req_payload["account_id"],
+            receiver_id=req_payload["counterparty_id"],
+            amount=req_payload["amount"],
+            currency=req_payload.get("currency", "USD"),
+            payment_format=req_payload.get("action_type", "transfer"),
+            timestamp=req_payload["timestamp"]
+        )
+        db.add(new_txn)
+        db.commit()
+    except Exception as e:
+        print(f"[MuleNet] Failed to commit transaction {txn_id} to DB: {e}")
 
     return CommitResponse(
         status="COMMITTED",
