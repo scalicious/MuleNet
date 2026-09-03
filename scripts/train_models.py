@@ -73,3 +73,58 @@ def train_and_export_all_models():
     print(f"XGBoost Train Acc: {train_acc:.4f}, Test Acc: {test_acc:.4f}")
 
     # Fit SHAP explainer
+    print("Saving XGBoost model...")
+
+
+    for ad in artifacts_dirs:
+        xgb_model_path = os.path.join(ad, "xgboost_sequence_model.json")
+        xgb_model.save_model(xgb_model_path)
+        
+        meta = {
+            "features": seq_features,
+            "train_acc": float(train_acc),
+            "test_acc": float(test_acc),
+            "scale_pos_weight": float(scale_pos_weight)
+        }
+        with open(os.path.join(ad, "sequence_model_meta.json"), "w") as f:
+            json.dump(meta, f, indent=2)
+
+    # 2. PyG GAT Network Risk Model
+    print("=== 3. Training Graph Attention Network (GAT) ===")
+    class MuleGATModel(nn.Module):
+        def __init__(self, in_channels: int = 16, hidden_channels: int = 64, out_channels: int = 2, heads: int = 2):
+            super().__init__()
+            self.conv1 = GATConv(in_channels, hidden_channels, heads=heads, concat=True)
+            self.conv2 = GATConv(hidden_channels * heads, out_channels, heads=1, concat=False)
+
+        def forward(self, x: torch.Tensor, edge_index: torch.Tensor, return_attention_weights: bool = False):
+            if return_attention_weights:
+                x, (edge_index_1, alpha_1) = self.conv1(x, edge_index, return_attention_weights=True)
+                x = F.relu(x)
+                x = F.dropout(x, p=0.2, training=self.training)
+                out, (edge_index_2, alpha_2) = self.conv2(x, edge_index, return_attention_weights=True)
+                return out, (edge_index_2, alpha_2)
+            else:
+                x = self.conv1(x, edge_index)
+                x = F.relu(x)
+                x = F.dropout(x, p=0.2, training=self.training)
+                out = self.conv2(x, edge_index)
+                return out
+
+    # Construct synthetic graph batches for GNN pre-training
+    num_nodes = 500
+    gat_features = 16
+    x_nodes = torch.randn(num_nodes, gat_features)
+    
+    # Generate edges (scale-free mule clusters)
+    src_list, dst_list = [], []
+    for i in range(num_nodes):
+        # preferential attachment
+        k = np.random.randint(1, 5)
+        targets = np.random.choice(num_nodes, size=k, replace=False)
+        for t in targets:
+            if t != i:
+                src_list.append(i)
+                dst_list.append(t)
+    
+    edge_index = torch.tensor([src_list, dst_list], dtype=torch.long)
