@@ -15,6 +15,9 @@ class AnomalyEngine:
         pass
 
     def score_anomaly(self, amount: float, velocity: float, setup_gap: float) -> float:
+        """
+        Scores transaction based on Isolation Forest anomaly bounds.
+        """
         # ---------------------------------------------------------
         # PERSON 3 PLACEHOLDER: Isolation Forest Inference
         # Predict using Isolation Forest
