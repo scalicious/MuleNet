@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Activity, ShieldAlert, Filter } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Activity, ShieldAlert, Radio, AlertOctagon } from 'lucide-react';
 import { Transaction, RiskTier, EnforcementStatus } from '../types/risk';
 import TransactionRow from './TransactionRow';
 
@@ -102,16 +102,16 @@ const MOCK_ACCOUNTS = [
   'ACC-9204', 'ACC-3140', 'ACC-7218', 'ACC-5093'
 ];
 
-const MOCK_AMOUNTS = [650, 1200, 3100, 8400, 18200, 24600, 42500, 84920, 129400, 210000];
+const MOCK_AMOUNTS = [720, 1450, 3100, 8900, 18200, 24600, 42500, 84920, 129400, 245000];
 
 const RISK_PRESETS: Array<{ score: number; tier: RiskTier; status: EnforcementStatus }> = [
-  { score: 14, tier: 'LOW', status: 'ALLOWED' },
-  { score: 22, tier: 'LOW', status: 'ALLOWED' },
+  { score: 12, tier: 'LOW', status: 'ALLOWED' },
+  { score: 24, tier: 'LOW', status: 'ALLOWED' },
   { score: 48, tier: 'MEDIUM', status: 'FLAGGED' },
-  { score: 56, tier: 'MEDIUM', status: 'FLAGGED' },
+  { score: 58, tier: 'MEDIUM', status: 'FLAGGED' },
   { score: 79, tier: 'HIGH', status: 'CHALLENGED' },
-  { score: 84, tier: 'HIGH', status: 'CHALLENGED' },
-  { score: 95, tier: 'CRITICAL', status: 'BLOCKED' },
+  { score: 86, tier: 'HIGH', status: 'CHALLENGED' },
+  { score: 96, tier: 'CRITICAL', status: 'BLOCKED' },
 ];
 
 function generateMockTransaction(): Transaction {
@@ -156,7 +156,7 @@ export default function LiveTransactionFeed({
   const [internalSelectedTxn, setInternalSelectedTxn] = useState<Transaction | null>(null);
   const [totalEvaluatedCount, setTotalEvaluatedCount] = useState<number>(INITIAL_TRANSACTIONS.length);
 
-  // Active selection either from prop or internal state
+  // Active selection either from parent prop or internal state
   const activeSelected = selectedTxn !== undefined ? selectedTxn : internalSelectedTxn;
 
   const handleSelect = (tx: Transaction) => {
@@ -166,6 +166,7 @@ export default function LiveTransactionFeed({
     }
   };
 
+  // Pre-Commitment Bounded Stream Generator (3.5s cycle)
   useEffect(() => {
     const interval = setInterval(() => {
       const newTx = generateMockTransaction();
@@ -176,79 +177,97 @@ export default function LiveTransactionFeed({
     return () => clearInterval(interval);
   }, []);
 
+  // Critical alerts count in current window
+  const criticalCount = useMemo(
+    () => transactions.filter((t) => t.riskTier === 'CRITICAL').length,
+    [transactions]
+  );
+
   return (
     <div className="w-full bg-[#0d131f] border border-[#1f293d] rounded-lg overflow-hidden flex flex-col shadow-sm">
       {/* Header Area */}
-      <div className="px-4 sm:px-6 py-4 border-b border-[#1f293d] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0b0f17]/60">
+      <div className="px-4 sm:px-6 py-4 border-b border-[#1f293d] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0b0f17]/70">
         {/* Title & Live Status */}
         <div className="flex items-center space-x-3">
-          <div className="w-7 h-7 rounded-md bg-cyan-950/50 border border-cyan-800/40 flex items-center justify-center text-cyan-400 shrink-0">
-            <Activity className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-lg bg-cyan-950/50 border border-cyan-800/40 flex items-center justify-center text-cyan-400 shrink-0">
+            <Radio className="w-4 h-4 animate-subtle-pulse" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xs sm:text-sm font-bold tracking-wider uppercase text-slate-100 font-sans">
                 PRE-COMMITMENT STREAM
               </h2>
-              {/* LIVE Indicator */}
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-emerald-900/60 bg-emerald-950/30 text-emerald-400 text-[10px] font-mono font-medium tracking-wide">
-                <span className="relative flex h-1.5 w-1.5">
+              {/* LIVE Indicator with Pulsing Beacon */}
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-emerald-900/60 bg-emerald-950/40 text-emerald-400 text-[10px] font-mono font-semibold tracking-wide">
+                <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
                 <span>LIVE</span>
               </div>
             </div>
-            <p className="text-[11px] text-slate-400 font-mono mt-0.5">
-              Real-time pre-execution transaction risk scoring pipeline
+            <p className="text-[11px] text-slate-400 font-mono mt-0.5 flex items-center gap-1.5">
+              <span>Evaluating transactions before settlement</span>
+              <span>•</span>
+              <span className="text-cyan-400">Latency: 0.4ms</span>
             </p>
           </div>
         </div>
 
-        {/* Legend & Event Counter */}
-        <div className="flex items-center flex-wrap gap-3 sm:gap-4 self-start sm:self-center">
-          {/* Risk Legend */}
-          <div className="flex items-center gap-2 text-[10px] font-mono font-semibold">
-            <span className="text-slate-400 text-[10px] uppercase mr-0.5">Legend:</span>
+        {/* Legend, Critical Counter & Event Counter */}
+        <div className="flex items-center flex-wrap gap-2.5 sm:gap-3.5 self-start sm:self-center">
+          {/* Critical Alerts Badge */}
+          {criticalCount > 0 && (
+            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-rose-900/60 bg-rose-950/30 text-rose-400 text-[10px] font-mono font-bold">
+              <AlertOctagon className="w-3 h-3 text-rose-500" />
+              <span>{criticalCount} CRITICAL IN WINDOW</span>
+            </div>
+          )}
+
+          {/* Compact Risk Legend */}
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded border border-slate-800 bg-slate-900/60 text-[10px] font-mono font-medium">
+            <span className="text-slate-500 uppercase text-[9px] mr-0.5">LEGEND:</span>
             <span className="flex items-center gap-1 text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> LOW
             </span>
             <span className="flex items-center gap-1 text-yellow-400">
               <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> MED
             </span>
-            <span className="flex items-center gap-1 text-orange-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span> HIGH
+            <span className="flex items-center gap-1 text-amber-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span> HIGH
             </span>
-            <span className="flex items-center gap-1 text-red-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span> CRIT
+            <span className="flex items-center gap-1 text-rose-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span> CRIT
             </span>
           </div>
 
-          {/* Event Count Badge */}
+          {/* Event Count */}
           <div className="px-2.5 py-1 rounded border border-slate-800 bg-slate-900/80 text-slate-300 text-[11px] font-mono">
-            <span>{totalEvaluatedCount} Evaluated</span>
-            <span className="text-slate-400 ml-1.5">({transactions.length} Visible)</span>
+            <span className="font-semibold text-slate-200">{totalEvaluatedCount}</span>
+            <span className="text-slate-500 ml-1">Evaluated</span>
+            <span className="text-slate-500 ml-1.5 font-normal">({transactions.length} Stream Buffer)</span>
           </div>
         </div>
       </div>
 
-      {/* Column Headers */}
-      <div className="hidden md:flex items-center justify-between px-6 py-2 bg-[#090d15] border-b border-[#1f293d]/60 text-[11px] font-mono uppercase tracking-wider text-slate-400">
+      {/* Column Headers for High Readability */}
+      <div className="hidden md:flex items-center justify-between px-6 py-2 bg-[#090d15] border-b border-[#1f293d]/80 text-[11px] font-mono uppercase tracking-wider text-slate-400 select-none">
         <div className="flex items-center space-x-5">
-          <span className="w-20">Timestamp</span>
-          <span className="w-24">Txn ID</span>
-          <span>Flow Routing</span>
+          <span className="w-20">Time (UTC)</span>
+          <span className="w-24">Transaction</span>
+          <span>Payment Flow (Sender → Receiver)</span>
         </div>
         <div className="flex items-center space-x-4">
           <span className="w-20 text-right">Amount</span>
           <span className="hidden lg:inline-block w-16 text-center">Score</span>
           <span className="w-24 text-center">Risk Tier</span>
-          <span className="w-24 text-center">Decision</span>
+          <span className="w-28 text-center">Enforcement</span>
+          <span className="w-5"></span>
         </div>
       </div>
 
       {/* Bounded Transaction Rows List */}
-      <div className="divide-y divide-[#1f293d]/80 overflow-x-auto">
+      <div className="divide-y divide-[#1f293d]/70 overflow-x-auto">
         {transactions.map((tx, idx) => (
           <TransactionRow
             key={tx.id}

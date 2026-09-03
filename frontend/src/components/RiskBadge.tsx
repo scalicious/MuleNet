@@ -1,49 +1,61 @@
 import React from 'react';
 import { RiskTier } from '../types/risk';
+import { ShieldAlert, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react';
 
 export interface RiskBadgeProps {
   tier: RiskTier;
   score?: number;
-  showDot?: boolean;
+  showIcon?: boolean;
   size?: 'sm' | 'md';
 }
 
-const TIER_CONFIG: Record<RiskTier, { style: string; dot: string }> = {
-  LOW: {
-    style: 'text-emerald-400 bg-emerald-950/40 border-emerald-800/50',
-    dot: 'bg-emerald-400',
-  },
-  MEDIUM: {
-    style: 'text-yellow-400 bg-yellow-950/40 border-yellow-800/50',
-    dot: 'bg-yellow-400',
+const TIER_CONFIG: Record<RiskTier, { style: string; dot: string; Icon: React.ComponentType<{ className?: string }> }> = {
+  CRITICAL: {
+    style: 'text-rose-400 bg-rose-950/50 border-rose-800/70 shadow-[0_0_8px_rgba(244,63,94,0.15)] font-bold',
+    dot: 'bg-rose-500',
+    Icon: ShieldAlert,
   },
   HIGH: {
-    style: 'text-orange-400 bg-orange-950/40 border-orange-800/50',
-    dot: 'bg-orange-400',
+    style: 'text-amber-400 bg-amber-950/40 border-amber-800/60 font-semibold',
+    dot: 'bg-amber-400',
+    Icon: AlertTriangle,
   },
-  CRITICAL: {
-    style: 'text-red-400 bg-red-950/40 border-red-800/50',
-    dot: 'bg-red-400',
+  MEDIUM: {
+    style: 'text-yellow-300 bg-yellow-950/30 border-yellow-800/50 font-medium',
+    dot: 'bg-yellow-400',
+    Icon: AlertCircle,
+  },
+  LOW: {
+    style: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40 font-medium',
+    dot: 'bg-emerald-400',
+    Icon: CheckCircle,
   },
 };
 
 export default function RiskBadge({
   tier,
   score,
-  showDot = true,
+  showIcon = false,
   size = 'md',
 }: RiskBadgeProps) {
   const config = TIER_CONFIG[tier] || TIER_CONFIG.LOW;
-  const padding = size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-0.5 text-xs';
+  const { Icon } = config;
+  const padding = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs';
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded font-mono font-bold tracking-wider uppercase border ${config.style} ${padding} shrink-0`}
+      className={`inline-flex items-center gap-1.5 rounded font-mono tracking-wider uppercase border transition-colors ${config.style} ${padding} shrink-0`}
     >
-      {showDot && <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />}
+      {showIcon ? (
+        <Icon className="w-3.5 h-3.5 shrink-0" />
+      ) : (
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${config.dot}`} />
+      )}
       <span>{tier}</span>
       {typeof score === 'number' && (
-        <span className="opacity-80 font-normal ml-0.5">({score})</span>
+        <span className="opacity-75 font-mono text-[10px] sm:text-[11px] ml-0.5">
+          {score}
+        </span>
       )}
     </span>
   );
