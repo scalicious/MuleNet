@@ -29,6 +29,9 @@ class MuleGATModel(nn.Module):
             out = self.conv2(x, edge_index)
             return out
 
+import logging
+logger = logging.getLogger(__name__)
+
 class NetworkRiskEngine:
     def __init__(self):
         self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
