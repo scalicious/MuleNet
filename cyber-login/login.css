@@ -1,23 +1,21 @@
 /* ==========================================================================
-   DETECT. PROTECT. RESPOND. - LIGHT BLUEISH / CYBER CYAN THEME
-   Inspired by Reference Photo with Hero Headline & Dark Electric Blue Aesthetics
+   AUTHENTICATION GATEWAY - CUSTOM IMAGE BACKGROUND & HERO TEXT
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Cyber Blue & Cyan Palette */
+  /* Color Palette */
   --bg-dark: #040711;
-  --bg-card: rgba(13, 20, 36, 0.88);
-  --bg-input: rgba(8, 14, 26, 0.9);
+  --bg-card: rgba(10, 14, 26, 0.88);
+  --bg-input: rgba(16, 22, 34, 0.92);
   
   --cyan-primary: #06b6d4;
   --cyan-glow: #00f2fe;
-  --cyan-muted: rgba(6, 182, 212, 0.15);
+  --cyan-muted: rgba(6, 182, 212, 0.18);
   --cyan-border: rgba(6, 182, 212, 0.4);
 
   --blue-electric: #3b82f6;
-  --blue-glow: rgba(59, 130, 246, 0.4);
 
   --gradient-cyan: linear-gradient(135deg, #06b6d4, #3b82f6);
   --gradient-footer: linear-gradient(90deg, #1e3a8a 0%, #2563eb 30%, #06b6d4 70%, #00f2fe 100%);
@@ -60,7 +58,7 @@ html, body {
 }
 
 /* ==========================================================================
-   LIGHT BLUEISH CYBER BACKGROUND SYSTEM
+   BACKGROUND SYSTEM WITH USER IMAGE bg.jpg
    ========================================================================== */
 
 .cyber-bg {
@@ -71,103 +69,9 @@ html, body {
   height: 100vh;
   z-index: 0;
   overflow: hidden;
-  background: var(--bg-dark);
-}
-
-/* Pulsing Ambient Light-Blue Glow Orbs */
-.glow-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  pointer-events: none;
-  opacity: 0.65;
-}
-
-.glow-orb-1 {
-  top: -10%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 650px;
-  height: 450px;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, rgba(59, 130, 246, 0.1) 60%, transparent 100%);
-  animation: orbPulse 8s ease-in-out infinite alternate;
-}
-
-.glow-orb-2 {
-  bottom: -10%;
-  left: 15%;
-  width: 550px;
-  height: 550px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, rgba(30, 58, 138, 0.1) 60%, transparent 100%);
-  animation: orbPulse 10s ease-in-out infinite alternate-reverse;
-}
-
-.glow-orb-3 {
-  top: 35%;
-  right: -10%;
-  width: 550px;
-  height: 550px;
-  background: radial-gradient(circle, rgba(0, 242, 254, 0.18) 0%, transparent 70%);
-  animation: orbPulse 12s ease-in-out infinite alternate;
-}
-
-@keyframes orbPulse {
-  0% { transform: scale(1) translateY(0); opacity: 0.55; }
-  50% { transform: scale(1.15) translateY(-20px); opacity: 0.8; }
-  100% { transform: scale(1.05) translateY(10px); opacity: 0.65; }
-}
-
-/* Moving Perspective Grid */
-.cyber-grid {
-  position: absolute;
-  top: 0;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background-image: 
-    linear-gradient(to right, rgba(6, 182, 212, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(6, 182, 212, 0.06) 1px, transparent 1px);
-  background-size: 60px 60px;
-  transform: perspective(600px) rotateX(25deg);
-  animation: gridSlide 30s linear infinite;
-  pointer-events: none;
-}
-
-@keyframes gridSlide {
-  0% { transform: perspective(600px) rotateX(25deg) translateY(0); }
-  100% { transform: perspective(600px) rotateX(25deg) translateY(-60px); }
-}
-
-/* Floating Cyan Dust Particles */
-.particles-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.particle {
-  position: absolute;
-  background: var(--cyan-glow);
-  border-radius: 50%;
-  opacity: 0.4;
-  box-shadow: 0 0 8px var(--cyan-glow);
-  animation: floatUp linear infinite;
-}
-
-.particle:nth-child(1) { left: 15%; width: 3px; height: 3px; animation-duration: 14s; animation-delay: 0s; }
-.particle:nth-child(2) { left: 35%; width: 4px; height: 4px; animation-duration: 18s; animation-delay: 2s; }
-.particle:nth-child(3) { left: 60%; width: 2px; height: 2px; animation-duration: 12s; animation-delay: 4s; }
-.particle:nth-child(4) { left: 80%; width: 3px; height: 3px; animation-duration: 16s; animation-delay: 1s; }
-.particle:nth-child(5) { left: 90%; width: 4px; height: 4px; animation-duration: 20s; animation-delay: 3s; }
-
-@keyframes floatUp {
-  0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
-  20% { opacity: 0.7; }
-  80% { opacity: 0.7; }
-  100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+  background: 
+    linear-gradient(to bottom, rgba(4, 7, 17, 0.55), rgba(4, 7, 17, 0.75)),
+    url('bg.jpg') no-repeat center center / cover;
 }
 
 /* Top Header Bar */
@@ -194,7 +98,7 @@ html, body {
   letter-spacing: 2px;
   text-transform: uppercase;
   backdrop-filter: blur(12px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px var(--cyan-muted);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 15px var(--cyan-muted);
 }
 
 .top-pill-dots {
@@ -203,7 +107,7 @@ html, body {
 }
 
 /* ==========================================================================
-   LARGE HERO TEXT IN MIDDLE MATCHING REFERENCE PHOTO
+   MIDDLE HERO TEXT: DETECT • PROTECT • RESPOND
    ========================================================================== */
 
 .hero-text-container {
@@ -211,28 +115,25 @@ html, body {
   margin-bottom: 24px;
   position: relative;
   display: inline-block;
-  padding: 16px 28px;
+  padding: 14px 32px;
+  background: rgba(10, 14, 26, 0.7);
+  border-radius: var(--border-radius-md);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
 .hero-text-heading {
-  font-size: 42px;
-  font-weight: 800;
+  font-size: 34px;
+  font-weight: 900;
   color: #ffffff;
-  letter-spacing: -1px;
-  line-height: 1.15;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0 0 20px rgba(0, 242, 254, 0.6);
 }
 
-.hero-text-highlight {
+.hero-text-bullet {
   color: var(--cyan-glow);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.hero-text-arrow {
-  color: var(--cyan-primary);
-  font-family: var(--font-mono);
-  font-weight: 700;
+  margin: 0 8px;
 }
 
 .hero-dotted-underline {
@@ -263,14 +164,14 @@ html, body {
   border-radius: var(--border-radius-lg);
   padding: 38px 34px;
   box-shadow: 
-    0 25px 70px rgba(0, 0, 0, 0.9),
+    0 25px 70px rgba(0, 0, 0, 0.95),
     0 0 40px var(--cyan-muted),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(24px);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(28px);
   transition: var(--transition-smooth);
 }
 
-/* White Corner Crop Brackets matching [ ┌ ┐ └ ┘ ] in Photo */
+/* White Corner Crop Brackets matching [ ┌ ┐ └ ┘ ] */
 .corner-bracket {
   position: absolute;
   width: 16px;
@@ -278,7 +179,7 @@ html, body {
   border-color: #ffffff;
   border-style: solid;
   pointer-events: none;
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.9));
 }
 .corner-bracket.tl { top: -3px; left: -3px; border-width: 2px 0 0 2px; }
 .corner-bracket.tr { top: -3px; right: -3px; border-width: 2px 2px 0 0; }
@@ -442,7 +343,7 @@ html, body {
   text-decoration: underline;
 }
 
-/* Primary Action Button - Cyan Gradient */
+/* Primary Action Button */
 .cyber-btn {
   position: relative;
   width: 100%;
@@ -514,7 +415,7 @@ html, body {
   color: var(--text-secondary);
 }
 
-/* Bottom Glowing Banner - Electric Blue & Cyan */
+/* Bottom Glowing Banner */
 .bottom-glow-bar {
   position: fixed;
   bottom: 0;
@@ -577,7 +478,8 @@ html, body {
   }
 
   .hero-text-heading {
-    font-size: 28px;
+    font-size: 22px;
+    letter-spacing: 1.5px;
   }
 
   .security-panel {
