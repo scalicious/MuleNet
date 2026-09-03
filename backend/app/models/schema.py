@@ -17,7 +17,7 @@ class ActionDecision(str, Enum):
 class ScoreRequest(BaseModel):
     account_id: str
     action_type: str = "transfer"
-    amount: float
+    amount: float = Field(..., gt=0, description="Transaction amount must be strictly positive")
     currency: str = "USD"
     counterparty_id: str
     timestamp: str
@@ -42,7 +42,7 @@ class ScoreResponse(BaseModel):
     timestamp: str
     sender_id: str
     receiver_id: str
-    amount: float
+    amount: float = Field(..., gt=0, description="Transaction amount must be strictly positive")
     currency: str
     fused_score: float
     risk_tier: RiskTier
@@ -78,7 +78,7 @@ class GraphNode(BaseModel):
 class GraphLink(BaseModel):
     source: str
     target: str
-    amount: float
+    amount: float = Field(..., gt=0, description="Transaction amount must be strictly positive")
     gat_attention: float
     is_risky: bool = False
 
