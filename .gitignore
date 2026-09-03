@@ -221,3 +221,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Data files (raw and processed CSVs exceed Git LFS thresholds)
+data/raw/*.csv
+data/processed/*.csv
+
