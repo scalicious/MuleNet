@@ -52,16 +52,20 @@ const RISK_PALETTES: Record<
   },
 };
 
+import { Transaction } from '../types/risk';
+
 export interface GraphExplorerProps {
   initialData?: GraphData;
   onSelectAccount?: (accountId: string) => void;
   selectedAccountId?: string | null;
+  liveTransactions?: Transaction[];
 }
 
 export default function GraphExplorer({
   initialData = MOCK_GRAPH_DATA,
   onSelectAccount,
   selectedAccountId,
+  liveTransactions = [],
 }: GraphExplorerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const fgRef = useRef<ForceGraphMethods>(null);
@@ -73,12 +77,75 @@ export default function GraphExplorer({
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [selectedClusterFilter, setSelectedClusterFilter] = useState<string | null>(null);
 
-  // Sync with initialData if provided externally
+  // Sync with liveTransactions and initialData
   useEffect(() => {
-    if (initialData && initialData.nodes?.length > 0) {
-      setGraphData((prev) => (prev.nodes.length === 0 ? initialData : prev));
+    if (initialData && initialData.nodes?.length > 0 && graphData.nodes.length === 0) {
+      setGraphData(initialData);
     }
-  }, [initialData]);
+
+    if (!liveTransactions || liveTransactions.length === 0) return;
+
+    setGraphData((prev) => {
+      const mergedNodes = [...prev.nodes];
+      const mergedLinks = [...prev.links];
+      
+      const existingNodeIds = new Set(mergedNodes.map((n) => n.id));
+      const existingLinkKeys = new Set(
+        mergedLinks.map((l) => `${typeof l.source === 'object' ? (l.source as any).id : l.source}-${typeof l.target === 'object' ? (l.target as any).id : l.target}`)
+      );
+
+      let added = false;
+      liveTransactions.forEach((tx) => {
+        // Sender node
+        if (!existingNodeIds.has(tx.sender)) {
+          mergedNodes.push({
+            id: tx.sender,
+            label: tx.sender,
+            riskTier: tx.riskTier,
+            riskScore: tx.riskScore || (tx.riskTier === 'CRITICAL' ? 95 : 20),
+            transactedVolume: typeof tx.amount === 'number' ? tx.amount : 5000,
+            isFocus: false,
+          });
+          existingNodeIds.add(tx.sender);
+          added = true;
+        }
+        // Receiver node
+        if (!existingNodeIds.has(tx.receiver)) {
+          mergedNodes.push({
+            id: tx.receiver,
+            label: tx.receiver,
+            riskTier: 'LOW',
+            riskScore: 20,
+            transactedVolume: typeof tx.amount === 'number' ? tx.amount : 5000,
+            isFocus: false,
+          });
+          existingNodeIds.add(tx.receiver);
+          added = true;
+        }
+        // Link
+        const linkKey = `${tx.sender}-${tx.receiver}`;
+        if (!existingLinkKeys.has(linkKey)) {
+          mergedLinks.push({
+            source: tx.sender,
+            target: tx.receiver,
+            amount: typeof tx.amount === 'number' ? tx.amount : 5000,
+            isRisky: tx.riskTier === 'CRITICAL' || tx.riskTier === 'HIGH',
+            riskScore: tx.riskScore || 50,
+            riskTier: tx.riskTier,
+          });
+          existingLinkKeys.add(linkKey);
+          added = true;
+        }
+      });
+
+      // Reset mechanism: if graph gets too cluttered with live events, reset to baseline
+      if (mergedNodes.length > 250) {
+        return { ...initialData };
+      }
+
+      return added ? { nodes: mergedNodes, links: mergedLinks } : prev;
+    });
+  }, [liveTransactions, initialData]);
 
   // Dynamically fetch backend 1-2 hop ego-subgraph when an account is selected
   useEffect(() => {

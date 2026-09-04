@@ -6,11 +6,15 @@ import LiveTransactionFeed from './components/LiveTransactionFeed';
 import GraphExplorer from './components/GraphExplorer';
 import CaseDossierModal from './components/CaseDossierModal';
 import { FileSearch } from 'lucide-react';
+import { useTransactionStream } from './hooks/useTransactionStream';
 
 export default function App() {
   const [selectedTxn, setSelectedTxn] = useState(null);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
+
+  // Lifted stream state so GraphExplorer can visualize live connections
+  const { transactions, eventCount } = useTransactionStream({ maxItems: 30 });
 
   const handleSelectTransaction = (tx) => {
     setSelectedTxn(tx);
@@ -52,6 +56,7 @@ export default function App() {
             <GraphExplorer
               selectedAccountId={selectedAccountId}
               onSelectAccount={handleSelectAccount}
+              liveTransactions={transactions}
             />
           </div>
 
@@ -60,6 +65,8 @@ export default function App() {
             <LiveTransactionFeed
               selectedTxn={selectedTxn}
               onSelectTxn={handleSelectTransaction}
+              liveTransactions={transactions}
+              eventCount={eventCount}
             />
           </div>
         </section>

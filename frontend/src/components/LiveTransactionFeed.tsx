@@ -7,16 +7,18 @@ import { useTransactionStream } from '../hooks/useTransactionStream';
 export interface LiveTransactionFeedProps {
   selectedTxn?: Transaction | null;
   onSelectTxn?: (transaction: Transaction) => void;
+  liveTransactions?: Transaction[];
+  eventCount?: number;
 }
 
 export default function LiveTransactionFeed({
   selectedTxn,
   onSelectTxn,
+  liveTransactions = [],
+  eventCount = 0,
 }: LiveTransactionFeedProps) {
-  // Use hook layer for stream lifecycle & fallback resilience
-  const { transactions, eventCount } = useTransactionStream({ maxItems: 20 });
-
   const activeSelected = selectedTxn;
+  const transactions = liveTransactions;
 
   const handleSelect = (tx: Transaction) => {
     if (onSelectTxn) {
