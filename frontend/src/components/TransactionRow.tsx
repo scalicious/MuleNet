@@ -37,9 +37,10 @@ export default function TransactionRow({
 }: TransactionRowProps) {
   const isCritical = transaction.riskTier === 'CRITICAL';
 
-  const formattedTime = transaction.timestamp.includes('T')
-    ? transaction.timestamp.split('T')[1]?.split('.')[0] || transaction.timestamp
-    : transaction.timestamp;
+  const rawTs = transaction.timestamp ?? '';
+  const formattedTime = rawTs.includes('T')
+    ? rawTs.split('T')[1]?.split('.')[0] || rawTs
+    : rawTs || new Date().toTimeString().split(' ')[0];
 
   const formattedAmount =
     typeof transaction.amount === 'number'

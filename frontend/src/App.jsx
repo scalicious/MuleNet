@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import DashboardHeader from './components/DashboardHeader';
 import MetricsBar from './components/MetricsBar';
-import AttackSimulatorPanel from './components/AttackSimulatorPanel';
+
 import LiveTransactionFeed from './components/LiveTransactionFeed';
 import GraphExplorer from './components/GraphExplorer';
 import CaseDossierModal from './components/CaseDossierModal';
@@ -40,10 +40,7 @@ export default function App() {
           <MetricsBar />
         </section>
 
-        {/* 3. Adversarial Attack Simulator (Judge Interactive Controls) */}
-        <section aria-label="Adversarial Attack Simulator">
-          <AttackSimulatorPanel onAttackInjected={handleAttackInjected} />
-        </section>
+
 
         {/* 4. Main Intelligence Area: Risk Graph (Primary) + Live Feed */}
         <section

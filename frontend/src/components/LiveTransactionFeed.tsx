@@ -14,7 +14,7 @@ export default function LiveTransactionFeed({
   onSelectTxn,
 }: LiveTransactionFeedProps) {
   // Use hook layer for stream lifecycle & fallback resilience
-  const { transactions, eventCount } = useTransactionStream({ maxItems: 10 });
+  const { transactions, eventCount } = useTransactionStream({ maxItems: 20 });
 
   const activeSelected = selectedTxn;
 

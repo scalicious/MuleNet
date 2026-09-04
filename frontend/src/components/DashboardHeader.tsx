@@ -13,7 +13,7 @@ export default function DashboardHeader() {
             </div>
             <div>
               <h1 className="text-sm sm:text-base font-bold tracking-wider text-slate-100 uppercase font-sans">
-                PRE-COMMITMENT RISK INTELLIGENCE
+                MuleNet
               </h1>
               <p className="text-[11px] text-slate-400 font-medium tracking-wide uppercase font-mono">
                 Real-Time Transaction Surveillance & Topology Analysis

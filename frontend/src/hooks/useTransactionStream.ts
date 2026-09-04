@@ -54,13 +54,15 @@ export function useTransactionStream({
 
       const newTx: Transaction = {
         id: streamTx.id || `TXN-${Math.floor(Math.random() * 89999 + 10000)}`,
-        timestamp: streamTx.time,
-        sender: streamTx.sender,
-        receiver: streamTx.receiver,
+        timestamp: streamTx.time || new Date().toTimeString().split(' ')[0],
+        sender: streamTx.sender || 'ACC-UNKNOWN',
+        receiver: streamTx.receiver || 'ACC-UNKNOWN',
         amount: numAmount,
         currency: 'USD',
         riskScore,
-        riskTier: streamTx.riskLevel as RiskTier,
+        riskTier: (['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(streamTx.riskLevel)
+          ? streamTx.riskLevel
+          : 'LOW') as RiskTier,
         status,
         isNew: true,
       };
